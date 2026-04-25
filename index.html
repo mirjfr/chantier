@@ -303,7 +303,8 @@ async function uploadFile(file, folder, type='image') {
 async function saveAll() {
   const i=chantiers.findIndex(c=>c.id===current.id);
   if(i>=0) chantiers[i]=current; else chantiers.unshift(current);
-  await ecrireBin(chantiers);
+  sauvegarderCache(chantiers); // cache local immediat
+  await ecrireBin(chantiers);  // cloud en arriere-plan
 }
 
 // ══════════════════════════════════════════════
@@ -324,6 +325,7 @@ async function creerChantier() {
   };
   try {
     chantiers.unshift(c);
+    sauvegarderCache(chantiers);
     await ecrireBin(chantiers);
     ['new-nom','new-client','new-adresse','new-date','new-desc'].forEach(id=>document.getElementById(id).value='');
     toast('Chantier créé !');
@@ -543,11 +545,31 @@ dz.addEventListener('dragover',e=>{e.preventDefault();dz.style.borderColor='var(
 dz.addEventListener('dragleave',()=>dz.style.borderColor='');
 dz.addEventListener('drop',e=>{e.preventDefault();dz.style.borderColor='';handlePhotoUpload(e.dataTransfer.files);});
 
+// ── CACHE LOCAL ──
+function sauvegarderCache(data) {
+  try { localStorage.setItem('chantiers_cache', JSON.stringify(data)); } catch(e){}
+}
+function chargerCache() {
+  try { const c=localStorage.getItem('chantiers_cache'); return c?JSON.parse(c):[]; }
+  catch(e){ return []; }
+}
+
 // ── INIT ──
 (async()=>{
-  showLoader('Chargement...');
-  try { chantiers=await lireBin(); renderChantiers(); }
-  catch(e){ renderChantiers(); }
+  // Affiche cache local instantanement
+  const cache = chargerCache();
+  if(cache.length) { chantiers=cache; renderChantiers(); }
+  else { showLoader('Premier chargement...'); }
+
+  // Sync cloud en arriere-plan
+  try {
+    const fresh = await lireBin();
+    if(JSON.stringify(fresh) !== JSON.stringify(chantiers)) {
+      chantiers = fresh;
+      sauvegarderCache(fresh);
+      renderChantiers();
+    }
+  } catch(e){}
   hideLoader();
 })();
 </script>
