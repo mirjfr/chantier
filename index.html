@@ -110,7 +110,10 @@
 
 <header>
   <div class="logo">Chantier<span>Pro</span></div>
-  <button class="sync-btn" onclick="syncAll()">🔄 Synchroniser</button>
+  <div style="display:flex;gap:8px;">
+    <button class="sync-btn" onclick="afficherBinId()">🔑 Mon ID</button>
+    <button class="sync-btn" onclick="syncAll()">🔄 Synchroniser</button>
+  </div>
 </header>
 
 <div class="tabs">
@@ -209,7 +212,7 @@ const JSONBIN_URL = 'https://api.jsonbin.io/v3/b';
 const GALLERY    = 'https://mirjfr.github.io/chantier/gallery.html';
 
 // ID du bin principal (stocké localement au premier lancement)
-let BIN_ID = localStorage.getItem('chantierbin_id') || null;
+let BIN_ID = localStorage.getItem('chantierbin_id') || '69ecb458856a6821896f951b';
 
 let chantiers = [], current = null, camStream = null;
 
@@ -261,9 +264,9 @@ async function lireBin() {
 async function ecrireBin(data) {
   if(!BIN_ID) {
     BIN_ID = await creerBin(data);
-    localStorage.setItem('chantierbin_id', BIN_ID);
-    return;
   }
+  localStorage.setItem('chantierbin_id', BIN_ID);
+  if(BIN_ID) {
   const r = await fetch(JSONBIN_URL+'/'+BIN_ID, {
     method: 'PUT',
     headers: {
@@ -537,6 +540,22 @@ function downloadQR(){
 function copyLink(){
   navigator.clipboard.writeText(document.getElementById('qr-link-text').textContent)
     .then(()=>toast('Lien copié !')).catch(()=>toast('Erreur','err'));
+}
+
+
+// ── AFFICHER BIN ID ──
+function afficherBinId() {
+  const id = localStorage.getItem('chantierbin_id') || 'Pas encore créé';
+  let box = document.getElementById('binid-box');
+  if(!box) {
+    box = document.createElement('div');
+    box.id = 'binid-box';
+    box.style.cssText = 'position:fixed;top:70px;left:50%;transform:translateX(-50%);background:#2C2820;border:2px solid #E8651A;border-radius:14px;padding:20px 24px;z-index:5000;text-align:center;max-width:90vw;';
+    document.body.appendChild(box);
+  }
+  box.innerHTML = '<div style="font-size:12px;color:#C8B89A;margin-bottom:8px;">Votre BIN ID :</div>'
+    + '<div style="font-size:15px;font-weight:700;color:#F8F4EE;word-break:break-all;margin-bottom:16px;padding:10px;background:rgba(0,0,0,0.3);border-radius:8px;">' + id + '</div>'
+    + '<button onclick="document.getElementById(\'binid-box\').remove()" style="background:#E8651A;border:none;border-radius:8px;padding:10px 20px;color:white;font-size:14px;font-weight:600;cursor:pointer;">Fermer</button>';
 }
 
 // ── DRAG & DROP ──
