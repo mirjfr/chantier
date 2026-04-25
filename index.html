@@ -3,477 +3,135 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>ChantierPro</title>
-<script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
+<title>ChantierPro — Galerie Client</title>
 <style>
   @import url('https://fonts.googleapis.com/css2?family=DM+Serif+Display:ital@0;1&family=DM+Sans:wght@300;400;500;600&display=swap');
-  :root { --orange:#E8651A; --orange-light:#F4894A; --dark:#1A1814; --dark2:#2C2820; --mid:#4A443C; --sand:#C8B89A; --cream:#F8F4EE; --danger:#E84545; }
+  :root { --orange:#E8651A; --dark:#1A1814; --dark2:#2C2820; --sand:#C8B89A; --cream:#F8F4EE; }
   * { margin:0; padding:0; box-sizing:border-box; }
   body { font-family:'DM Sans',sans-serif; background:var(--dark); color:var(--cream); min-height:100vh; }
-  header { background:var(--dark2); border-bottom:1px solid rgba(200,184,154,0.15); padding:16px 24px; display:flex; align-items:center; justify-content:space-between; position:sticky; top:0; z-index:100; }
+  header { background:var(--dark2); padding:18px 24px; border-bottom:1px solid rgba(200,184,154,0.15); }
   .logo { font-family:'DM Serif Display',serif; font-size:22px; color:var(--orange); }
   .logo span { color:var(--sand); font-style:italic; }
-  .sync-btn { background:rgba(200,184,154,0.1); border:1px solid rgba(200,184,154,0.2); border-radius:8px; padding:8px 14px; color:var(--sand); font-size:13px; cursor:pointer; }
-  .sync-btn:hover { background:rgba(200,184,154,0.2); }
-  .tabs { display:flex; gap:4px; background:var(--dark); padding:12px 24px 0; border-bottom:1px solid rgba(200,184,154,0.1); }
-  .tab { padding:10px 20px; border:none; background:transparent; color:var(--sand); font-family:'DM Sans',sans-serif; font-size:14px; font-weight:500; cursor:pointer; border-radius:8px 8px 0 0; transition:all 0.2s; }
-  .tab.active { background:var(--dark2); color:var(--orange); border-top:2px solid var(--orange); }
-  .page { display:none; padding:24px; max-width:900px; margin:0 auto; }
-  .page.active { display:block; }
-  .section-title { font-family:'DM Serif Display',serif; font-size:26px; color:var(--cream); margin-bottom:6px; }
-  .section-sub { color:var(--sand); font-size:14px; margin-bottom:24px; }
-  .card { background:var(--dark2); border:1px solid rgba(200,184,154,0.12); border-radius:16px; padding:24px; margin-bottom:20px; }
-  .card-title { font-size:13px; font-weight:600; text-transform:uppercase; letter-spacing:1px; color:var(--orange); margin-bottom:16px; }
-  .form-group { margin-bottom:16px; }
-  label { display:block; font-size:13px; font-weight:500; color:var(--sand); margin-bottom:6px; }
-  input, textarea { width:100%; background:rgba(255,255,255,0.05); border:1px solid rgba(200,184,154,0.2); border-radius:10px; padding:12px 16px; color:var(--cream); font-family:'DM Sans',sans-serif; font-size:15px; outline:none; }
-  input:focus, textarea:focus { border-color:var(--orange); }
-  textarea { resize:vertical; min-height:80px; }
-  .btn { padding:12px 24px; border:none; border-radius:10px; font-family:'DM Sans',sans-serif; font-size:15px; font-weight:600; cursor:pointer; transition:all 0.2s; display:inline-flex; align-items:center; gap:8px; }
-  .btn-primary { background:var(--orange); color:white; }
-  .btn-primary:hover { background:var(--orange-light); }
-  .btn-secondary { background:rgba(200,184,154,0.1); color:var(--sand); border:1px solid rgba(200,184,154,0.2); }
-  .btn-danger { background:rgba(232,69,69,0.15); color:var(--danger); border:1px solid rgba(232,69,69,0.3); font-size:13px; padding:8px 12px; }
-  .btn-full { width:100%; justify-content:center; }
-  .chantier-grid { display:grid; grid-template-columns:repeat(auto-fill,minmax(250px,1fr)); gap:16px; margin-top:16px; }
-  .chantier-card { background:var(--dark2); border:1px solid rgba(200,184,154,0.12); border-radius:14px; padding:20px; cursor:pointer; transition:all 0.2s; position:relative; overflow:hidden; }
-  .chantier-card::before { content:''; position:absolute; top:0; left:0; width:4px; height:100%; background:var(--orange); border-radius:14px 0 0 14px; }
-  .chantier-card:hover { border-color:var(--orange); transform:translateY(-2px); box-shadow:0 8px 24px rgba(232,101,26,0.15); }
-  .chantier-name { font-family:'DM Serif Display',serif; font-size:18px; color:var(--cream); margin-bottom:4px; }
-  .chantier-client { font-size:13px; color:var(--sand); margin-bottom:12px; }
-  .stat-badge { font-size:12px; padding:4px 10px; border-radius:20px; background:rgba(232,101,26,0.1); color:var(--orange); border:1px solid rgba(232,101,26,0.2); display:inline-block; margin-right:6px; }
-  .upload-zone { border:2px dashed rgba(200,184,154,0.25); border-radius:14px; padding:28px; text-align:center; cursor:pointer; transition:all 0.2s; position:relative; overflow:hidden; }
-  .upload-zone:hover { border-color:var(--orange); background:rgba(232,101,26,0.05); }
-  .upload-zone input[type=file] { position:absolute; inset:0; opacity:0; cursor:pointer; width:100%; height:100%; }
-  .upload-text { color:var(--sand); font-size:14px; }
-  .upload-text strong { color:var(--orange); }
-  .camera-btn { background:linear-gradient(135deg,var(--orange),var(--orange-light)); border:none; border-radius:14px; padding:18px; color:white; font-family:'DM Sans',sans-serif; font-size:16px; font-weight:600; cursor:pointer; width:100%; display:flex; align-items:center; justify-content:center; gap:12px; margin-bottom:16px; box-shadow:0 4px 20px rgba(232,101,26,0.3); }
-  #camera-preview-container { display:none; margin-bottom:16px; border-radius:14px; overflow:hidden; background:#000; }
-  #camera-preview { width:100%; max-height:280px; object-fit:cover; display:block; }
-  .camera-controls { display:flex; gap:10px; padding:10px 0 0; }
-  .media-grid { display:grid; grid-template-columns:repeat(auto-fill,minmax(130px,1fr)); gap:10px; margin-top:16px; }
-  .media-item { border-radius:10px; overflow:hidden; position:relative; aspect-ratio:1; background:rgba(255,255,255,0.05); }
-  .media-item img { width:100%; height:100%; object-fit:cover; cursor:pointer; }
-  .media-delete { position:absolute; top:5px; right:5px; background:rgba(232,69,69,0.9); border:none; border-radius:50%; width:22px; height:22px; color:white; font-size:11px; cursor:pointer; display:none; align-items:center; justify-content:center; }
-  .media-item:hover .media-delete { display:flex; }
-  .media-caption { position:absolute; bottom:0; left:0; right:0; background:linear-gradient(transparent,rgba(0,0,0,0.7)); padding:6px; font-size:9px; color:rgba(255,255,255,0.8); }
-  .pdf-item { display:flex; align-items:center; gap:12px; background:rgba(255,255,255,0.04); border:1px solid rgba(200,184,154,0.1); border-radius:10px; padding:14px; margin-bottom:10px; }
-  .pdf-name { font-size:14px; color:var(--cream); flex:1; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
-  .pdf-size { font-size:11px; color:var(--mid); }
-  .modal-overlay { display:none; position:fixed; inset:0; background:rgba(0,0,0,0.85); backdrop-filter:blur(8px); z-index:1000; align-items:center; justify-content:center; padding:20px; }
-  .modal-overlay.show { display:flex; }
-  .modal { background:var(--dark2); border:1px solid rgba(200,184,154,0.2); border-radius:20px; padding:28px; max-width:400px; width:100%; text-align:center; }
-  .modal h2 { font-family:'DM Serif Display',serif; font-size:22px; color:var(--cream); margin-bottom:6px; }
-  .modal p { color:var(--sand); font-size:13px; margin-bottom:20px; }
-  #qrcode-container { background:white; padding:14px; border-radius:12px; display:inline-block; margin-bottom:14px; }
-  .qr-link { background:rgba(255,255,255,0.05); border:1px solid rgba(200,184,154,0.15); border-radius:8px; padding:10px 12px; font-size:11px; color:var(--sand); word-break:break-all; margin-bottom:16px; text-align:left; }
-  .loader { display:none; position:fixed; inset:0; background:rgba(0,0,0,0.75); z-index:2000; align-items:center; justify-content:center; flex-direction:column; gap:16px; }
-  .loader.show { display:flex; }
+  .hero { padding:32px 24px 16px; max-width:960px; margin:0 auto; }
+  h1 { font-family:'DM Serif Display',serif; font-size:30px; color:var(--cream); margin-bottom:6px; }
+  .subtitle { color:var(--sand); font-size:15px; margin-bottom:14px; }
+  .badges { display:flex; gap:8px; flex-wrap:wrap; }
+  .badge { background:rgba(232,101,26,0.1); color:var(--orange); border:1px solid rgba(232,101,26,0.2); padding:5px 14px; border-radius:20px; font-size:13px; }
+  .section { max-width:960px; margin:0 auto; padding:0 24px 24px; }
+  .section-label { font-size:13px; font-weight:600; text-transform:uppercase; letter-spacing:1px; color:var(--orange); margin:28px 0 16px; }
+  .photo-grid { display:grid; grid-template-columns:repeat(auto-fill,minmax(180px,1fr)); gap:12px; }
+  .photo-item { border-radius:12px; overflow:hidden; position:relative; aspect-ratio:1; background:rgba(255,255,255,0.05); }
+  .photo-item img { width:100%; height:100%; object-fit:cover; cursor:pointer; transition:transform 0.2s; display:block; }
+  .photo-item img:hover { transform:scale(1.04); }
+  .photo-dl { position:absolute; bottom:8px; right:8px; background:rgba(0,0,0,0.75); color:white; border-radius:8px; padding:6px 10px; font-size:12px; text-decoration:none; }
+  .pdf-item { display:flex; align-items:center; gap:14px; background:rgba(255,255,255,0.04); border:1px solid rgba(200,184,154,0.1); border-radius:12px; padding:16px; margin-bottom:10px; }
+  .pdf-name { flex:1; font-size:15px; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
+  .dl-btn { background:var(--orange); color:white; padding:10px 18px; border-radius:8px; text-decoration:none; font-size:14px; font-weight:600; white-space:nowrap; }
+  .note-item { background:rgba(255,255,255,0.04); border:1px solid rgba(200,184,154,0.1); border-radius:12px; padding:16px; margin-bottom:10px; }
+  .note-date { font-size:11px; color:var(--sand); margin-bottom:8px; }
+  .note-text { font-size:14px; line-height:1.6; white-space:pre-wrap; }
+  .lightbox { display:none; position:fixed; inset:0; background:rgba(0,0,0,0.96); z-index:1000; align-items:center; justify-content:center; flex-direction:column; gap:16px; }
+  .lightbox.show { display:flex; }
+  .lightbox img { max-width:95vw; max-height:82vh; object-fit:contain; border-radius:8px; }
+  .lightbox-close { position:absolute; top:20px; right:20px; color:white; font-size:28px; cursor:pointer; background:rgba(255,255,255,0.1); border-radius:50%; width:44px; height:44px; display:flex; align-items:center; justify-content:center; }
+  .lightbox-dl { background:var(--orange); color:white; padding:12px 24px; border-radius:10px; text-decoration:none; font-size:15px; font-weight:600; }
+  .loader-page { display:flex; flex-direction:column; align-items:center; justify-content:center; min-height:60vh; gap:16px; color:var(--sand); }
   .spinner { width:44px; height:44px; border:3px solid rgba(232,101,26,0.2); border-top-color:var(--orange); border-radius:50%; animation:spin 0.8s linear infinite; }
   @keyframes spin { to { transform:rotate(360deg); } }
-  .loader-text { color:var(--sand); font-size:14px; }
-  .toast { position:fixed; bottom:24px; left:50%; transform:translateX(-50%) translateY(100px); background:var(--dark2); border:1px solid rgba(200,184,154,0.2); border-radius:12px; padding:12px 22px; color:var(--cream); font-size:14px; font-weight:500; z-index:3000; transition:transform 0.3s; max-width:90vw; }
-  .toast.show { transform:translateX(-50%) translateY(0); }
-  .toast.error { border-color:rgba(232,69,69,0.5); }
-  .detail-header { display:flex; align-items:flex-start; gap:12px; margin-bottom:24px; flex-wrap:wrap; }
-  .back-btn { background:rgba(200,184,154,0.1); border:1px solid rgba(200,184,154,0.2); border-radius:10px; padding:10px 14px; color:var(--sand); cursor:pointer; font-family:'DM Sans',sans-serif; font-size:14px; }
-  .row { display:flex; gap:12px; }
-  .row .form-group { flex:1; }
-  .empty-state { text-align:center; padding:50px 20px; color:var(--mid); }
-  .empty-icon { font-size:44px; margin-bottom:14px; }
-  @media(max-width:600px) { .row{flex-direction:column;} .tabs{overflow-x:auto;padding:12px 12px 0;} .page{padding:14px;} }
+  .error-box { text-align:center; padding:60px 24px; color:var(--sand); }
+  .error-box .big { font-size:48px; margin-bottom:16px; }
+  @media(max-width:600px) { .photo-grid{grid-template-columns:repeat(auto-fill,minmax(140px,1fr));} .hero,.section{padding-left:14px;padding-right:14px;} }
 </style>
 </head>
 <body>
-
-<div class="loader" id="loader"><div class="spinner"></div><div class="loader-text" id="loader-text">Chargement...</div></div>
-<div class="toast" id="toast"></div>
-
-<div class="modal-overlay" id="qr-modal">
-  <div class="modal">
-    <h2>🔲 QR Code Client</h2>
-    <p id="qr-subtitle"></p>
-    <div id="qrcode-container"><div id="qrcode"></div></div>
-    <div class="qr-link" id="qr-link-text"></div>
-    <div style="display:flex;gap:8px;justify-content:center;flex-wrap:wrap;">
-      <button class="btn btn-primary" onclick="downloadQR()">⬇ Télécharger</button>
-      <button class="btn btn-secondary" onclick="copyLink()">📋 Copier</button>
-      <button class="btn btn-secondary" onclick="closeQRModal()">✕ Fermer</button>
-    </div>
-  </div>
+<header><div class="logo">Chantier<span>Pro</span></div></header>
+<div id="app">
+  <div class="loader-page"><div class="spinner"></div><div>Chargement de la galerie...</div></div>
 </div>
-
-<header>
-  <div class="logo">Chantier<span>Pro</span></div>
-  <button class="sync-btn" onclick="syncAll()">🔄 Synchroniser</button>
-</header>
-
-<div class="tabs">
-  <button class="tab active" id="tab-chantiers" onclick="showTab('chantiers',this)">🏗 Chantiers</button>
-  <button class="tab" id="tab-nouveau" onclick="showTab('nouveau',this)">➕ Nouveau</button>
+<div class="lightbox" id="lightbox" onclick="closeLightbox()">
+  <div class="lightbox-close">✕</div>
+  <img id="lightbox-img" src="" alt="">
+  <a id="lightbox-dl" class="lightbox-dl" href="" download onclick="event.stopPropagation()">⬇ Télécharger</a>
 </div>
-
-<div class="page active" id="page-chantiers">
-  <br>
-  <div class="section-title">Mes Chantiers</div>
-  <div class="section-sub">Synchronisés sur tous vos appareils ☁️</div>
-  <div id="chantier-list" class="chantier-grid"></div>
-</div>
-
-<div class="page" id="page-nouveau">
-  <br>
-  <div class="section-title">Nouveau Chantier</div>
-  <div class="section-sub">Synchronisé automatiquement sur tous vos appareils</div>
-  <div class="card">
-    <div class="card-title">Informations</div>
-    <div class="row">
-      <div class="form-group"><label>Nom du chantier *</label><input type="text" id="new-nom" placeholder="Ex: Rénovation cuisine"></div>
-      <div class="form-group"><label>Nom du client *</label><input type="text" id="new-client" placeholder="Ex: M. Dupont"></div>
-    </div>
-    <div class="row">
-      <div class="form-group"><label>Adresse</label><input type="text" id="new-adresse" placeholder="Ex: 12 rue des Fleurs"></div>
-      <div class="form-group"><label>Date de début</label><input type="date" id="new-date"></div>
-    </div>
-    <div class="form-group"><label>Notes</label><textarea id="new-desc" placeholder="Détails, remarques..."></textarea></div>
-    <button class="btn btn-primary btn-full" onclick="creerChantier()">🏗 Créer le chantier</button>
-  </div>
-</div>
-
-<div class="page" id="page-detail">
-  <br>
-  <div class="detail-header">
-    <button class="back-btn" onclick="backToList()">← Retour</button>
-    <div style="flex:1">
-      <div class="section-title" id="detail-nom" style="font-size:20px;margin-bottom:2px;"></div>
-      <div style="color:var(--sand);font-size:13px;" id="detail-info"></div>
-    </div>
-    <button class="btn btn-primary" onclick="genererQR()">🔲 QR Code</button>
-  </div>
-
-  <div class="card">
-    <div class="card-title">📷 Appareil photo</div>
-    <button class="camera-btn" onclick="activerCamera()">📷 Prendre une photo</button>
-    <div id="camera-preview-container">
-      <video id="camera-preview" autoplay playsinline muted></video>
-      <div class="camera-controls">
-        <button class="btn btn-primary" style="flex:1" onclick="prendrePhoto()">📸 Capturer</button>
-        <button class="btn btn-secondary" onclick="arreterCamera()">✕ Annuler</button>
-      </div>
-    </div>
-    <canvas id="photo-canvas" style="display:none;"></canvas>
-  </div>
-
-  <div class="card">
-    <div class="card-title">🖼 Ajouter des photos</div>
-    <div class="upload-zone" id="photo-drop-zone">
-      <input type="file" id="photo-input" accept="image/*" multiple onchange="handlePhotoUpload(this.files)">
-      <div style="font-size:32px;margin-bottom:8px;">🖼️</div>
-      <div class="upload-text"><strong>Cliquez ou glissez</strong> vos photos ici<br><small>JPG, PNG, HEIC — plusieurs à la fois</small></div>
-    </div>
-    <div id="photo-grid" class="media-grid"></div>
-  </div>
-
-  <div class="card">
-    <div class="card-title">📄 Documents PDF</div>
-    <div class="upload-zone">
-      <input type="file" id="pdf-input" accept=".pdf" multiple onchange="handlePdfUpload(this.files)">
-      <div style="font-size:32px;margin-bottom:8px;">📋</div>
-      <div class="upload-text"><strong>Cliquez ou glissez</strong> vos PDFs<br><small>Plans, rapports de réception...</small></div>
-    </div>
-    <div id="pdf-list" style="margin-top:16px;"></div>
-  </div>
-</div>
-
 <script>
-const CLOUD_NAME    = 'dyojhn5ng';
-const API_KEY       = '288215555649761';
-const API_SECRET    = 'Vz62siUnxolJkiy-gLrHof1sQO8';
-const UPLOAD_PRESET = 'chantier_unsigned';
-const GALLERY_BASE  = 'https://mirjfr.github.io/chantier/gallery.html';
+const CLOUD = 'dyojhn5ng';
 
-let chantiers = [], currentChantier = null, cameraStream = null;
-
-function showLoader(t='Chargement...') { document.getElementById('loader-text').textContent=t; document.getElementById('loader').classList.add('show'); }
-function hideLoader() { document.getElementById('loader').classList.remove('show'); }
-function toast(msg, type='success') {
-  const el=document.getElementById('toast');
-  el.textContent=(type==='success'?'✅ ':'❌ ')+msg;
-  el.className='toast show '+(type==='error'?'error':'');
-  clearTimeout(el._t); el._t=setTimeout(()=>el.classList.remove('show'),3500);
-}
-function showTab(tab,btn) {
-  document.querySelectorAll('.tab').forEach(t=>t.classList.remove('active'));
-  document.querySelectorAll('.page').forEach(p=>p.classList.remove('active'));
-  if(btn) btn.classList.add('active');
-  document.getElementById('page-'+tab).classList.add('active');
-  if(tab==='chantiers') renderChantiers();
-}
-
-// ── CLOUDINARY UPLOAD ──
-async function uploadFile(file, folder, resourceType='image') {
-  const fd=new FormData();
-  fd.append('file',file);
-  fd.append('upload_preset',UPLOAD_PRESET);
-  fd.append('folder','chantiers/'+currentChantier.id+'/'+folder);
-  const res=await fetch(`https://api.cloudinary.com/v1_1/${CLOUD_NAME}/${resourceType}/upload`,{method:'POST',body:fd});
-  const data=await res.json();
-  if(data.error) throw new Error(data.error.message);
-  return data;
-}
-
-// ── SAUVEGARDER CHANTIER EN JSON SUR CLOUDINARY ──
-async function saveChantier(chantier) {
-  const blob=new Blob([JSON.stringify(chantier)],{type:'application/json'});
-  const file=new File([blob],chantier.id+'.json',{type:'application/json'});
-  const fd=new FormData();
-  fd.append('file',file);
-  fd.append('upload_preset',UPLOAD_PRESET);
-  fd.append('public_id','chantiers_data/'+chantier.id);
-  const res=await fetch(`https://api.cloudinary.com/v1_1/${CLOUD_NAME}/raw/upload`,{method:'POST',body:fd});
-  const data=await res.json();
-  if(data.error) throw new Error(data.error.message);
-  // Met à jour l'index
-  const ids=await loadIndex();
-  if(!ids.includes(chantier.id)){ ids.unshift(chantier.id); await saveIndex(ids); }
-  return data;
-}
-
-// ── CHARGER L'INDEX DES CHANTIERS ──
-// On maintient un fichier index.json qui liste tous les IDs
-async function loadIndex() {
+async function init() {
+  const id = window.location.hash.replace('#','').trim();
+  if(!id){ showError('Lien invalide. Scannez à nouveau le QR code.'); return; }
   try {
-    const url = `https://res.cloudinary.com/${CLOUD_NAME}/raw/upload/chantiers_data/index.json?v=${Date.now()}`;
+    const url = `https://res.cloudinary.com/${CLOUD}/raw/upload/chantiers_data/${id}?v=${Date.now()}`;
     const res = await fetch(url);
-    if(!res.ok) return [];
-    return await res.json(); // tableau d'IDs
-  } catch(e) { return []; }
-}
-
-async function saveIndex(ids) {
-  const blob = new Blob([JSON.stringify(ids)], {type:'application/json'});
-  const file = new File([blob], 'index.json', {type:'application/json'});
-  const fd = new FormData();
-  fd.append('file', file);
-  fd.append('upload_preset', UPLOAD_PRESET);
-  fd.append('public_id', 'chantiers_data/index');
-  await fetch(`https://api.cloudinary.com/v1_1/${CLOUD_NAME}/raw/upload`, {method:'POST', body:fd});
-}
-
-async function loadChantiers() {
-  const ids = await loadIndex();
-  if(!ids.length) return [];
-  const list = [];
-  for(const id of ids) {
-    try {
-      const url = `https://res.cloudinary.com/${CLOUD_NAME}/raw/upload/chantiers_data/${id}.json?v=${Date.now()}`;
-      const res = await fetch(url);
-      if(res.ok) list.push(await res.json());
-    } catch(e){}
+    if(!res.ok) throw new Error('Chantier introuvable');
+    const c = await res.json();
+    renderGallery(c);
+  } catch(e) {
+    showError('Impossible de charger ce chantier.<br>Vérifiez votre connexion.');
+    console.error(e);
   }
-  return list.sort((a,b)=>new Date(b.createdAt)-new Date(a.createdAt));
 }
 
-async function syncAll() {
-  showLoader('Synchronisation...');
-  try {
-    chantiers=await loadChantiers();
-    renderChantiers();
-    toast('Synchronisé — '+chantiers.length+' chantier(s)');
-  } catch(e){ toast('Erreur sync : '+e.message,'error'); }
-  hideLoader();
-}
+function renderGallery(c) {
+  const photos = c.photos||[];
+  const pdfs   = c.pdfs||[];
+  const notes  = c.notes||[];
 
-// ── CREER CHANTIER ──
-async function creerChantier() {
-  const nom=document.getElementById('new-nom').value.trim();
-  const client=document.getElementById('new-client').value.trim();
-  if(!nom||!client){toast('Nom et client obligatoires','error');return;}
-  showLoader('Création...');
-  const c={id:Date.now().toString(),nom,client,
-    adresse:document.getElementById('new-adresse').value.trim(),
-    date:document.getElementById('new-date').value,
-    desc:document.getElementById('new-desc').value.trim(),
-    photos:[],pdfs:[],createdAt:new Date().toISOString()};
-  try {
-    await saveChantier(c);
-    chantiers.unshift(c);
-    ['new-nom','new-client','new-adresse','new-date','new-desc'].forEach(id=>document.getElementById(id).value='');
-    toast('Chantier créé !');
-    document.getElementById('tab-chantiers').click();
-  } catch(e){toast('Erreur : '+e.message,'error');}
-  hideLoader();
-}
+  const photosHtml = photos.length ? `
+    <div class="section-label">📸 Photos du chantier (${photos.length})</div>
+    <div class="photo-grid">
+      ${photos.map(p=>`
+        <div class="photo-item">
+          <img src="${p.url}" loading="lazy" onclick="openLightbox('${p.url}')">
+          <a class="photo-dl" href="${p.url}" download target="_blank">⬇</a>
+        </div>`).join('')}
+    </div>` : '';
 
-function renderChantiers() {
-  const el=document.getElementById('chantier-list');
-  if(!chantiers.length){el.innerHTML='<div class="empty-state" style="grid-column:1/-1"><div class="empty-icon">🏗️</div><p>Aucun chantier.<br>Créez votre premier chantier !</p></div>';return;}
-  el.innerHTML=chantiers.map(c=>`
-    <div class="chantier-card" onclick="ouvrirChantier('${c.id}')">
-      <div class="chantier-name">${c.nom}</div>
-      <div class="chantier-client">👤 ${c.client}</div>
-      ${c.adresse?`<div style="font-size:12px;color:var(--mid);margin-bottom:10px;">📍 ${c.adresse}</div>`:''}
-      <span class="stat-badge">📸 ${c.photos.length}</span>
-      <span class="stat-badge">📄 ${c.pdfs.length}</span>
-    </div>`).join('');
-}
-
-function ouvrirChantier(id) {
-  currentChantier=chantiers.find(c=>c.id===id);
-  if(!currentChantier) return;
-  document.querySelectorAll('.page').forEach(p=>p.classList.remove('active'));
-  document.getElementById('page-detail').classList.add('active');
-  document.getElementById('detail-nom').textContent=currentChantier.nom;
-  document.getElementById('detail-info').textContent='👤 '+currentChantier.client+(currentChantier.adresse?' • 📍 '+currentChantier.adresse:'');
-  renderPhotos(); renderPdfs();
-}
-
-function backToList() {
-  arreterCamera();
-  document.querySelectorAll('.page').forEach(p=>p.classList.remove('active'));
-  document.getElementById('page-chantiers').classList.add('active');
-  renderChantiers();
-}
-
-async function saveAndRefresh() {
-  await saveChantier(currentChantier);
-  const i=chantiers.findIndex(c=>c.id===currentChantier.id);
-  if(i>=0) chantiers[i]=currentChantier;
-}
-
-// ── PHOTOS ──
-async function handlePhotoUpload(files) {
-  if(!currentChantier||!files.length) return;
-  showLoader('Envoi de '+files.length+' photo(s)...');
-  try {
-    for(const f of files){
-      const d=await uploadFile(f,'photos','image');
-      currentChantier.photos.push({url:d.secure_url,publicId:d.public_id,name:f.name,uploadedAt:new Date().toISOString()});
-    }
-    await saveAndRefresh(); renderPhotos(); toast(files.length+' photo(s) envoyée(s) !');
-  } catch(e){toast('Erreur : '+e.message,'error');}
-  hideLoader(); document.getElementById('photo-input').value='';
-}
-
-function renderPhotos() {
-  const g=document.getElementById('photo-grid');
-  if(!currentChantier.photos.length){g.innerHTML='';return;}
-  g.innerHTML=currentChantier.photos.map((p,i)=>`
-    <div class="media-item">
-      <img src="${p.url}" loading="lazy" onclick="window.open('${p.url}','_blank')">
-      <button class="media-delete" onclick="deletePhoto(${i})">✕</button>
-      <div class="media-caption">${new Date(p.uploadedAt).toLocaleDateString('fr-FR')}</div>
-    </div>`).join('');
-}
-
-async function deletePhoto(i) {
-  if(!confirm('Supprimer cette photo ?')) return;
-  currentChantier.photos.splice(i,1);
-  showLoader('Mise à jour...');
-  await saveAndRefresh(); renderPhotos(); hideLoader();
-}
-
-// ── CAMERA ──
-async function activerCamera() {
-  try {
-    cameraStream=await navigator.mediaDevices.getUserMedia({video:{facingMode:{ideal:'environment'}}});
-    document.getElementById('camera-preview').srcObject=cameraStream;
-    document.getElementById('camera-preview-container').style.display='block';
-  } catch(e){toast('Caméra : '+e.message,'error');}
-}
-function arreterCamera() {
-  if(cameraStream){cameraStream.getTracks().forEach(t=>t.stop());cameraStream=null;}
-  document.getElementById('camera-preview-container').style.display='none';
-}
-async function prendrePhoto() {
-  const v=document.getElementById('camera-preview'),c=document.getElementById('photo-canvas');
-  c.width=v.videoWidth; c.height=v.videoHeight; c.getContext('2d').drawImage(v,0,0);
-  arreterCamera();
-  c.toBlob(async blob=>{
-    const file=new File([blob],'photo_'+Date.now()+'.jpg',{type:'image/jpeg'});
-    showLoader('Envoi...');
-    try {
-      const d=await uploadFile(file,'photos','image');
-      currentChantier.photos.push({url:d.secure_url,publicId:d.public_id,name:file.name,uploadedAt:new Date().toISOString()});
-      await saveAndRefresh(); renderPhotos(); toast('Photo envoyée !');
-    } catch(e){toast('Erreur : '+e.message,'error');}
-    hideLoader();
-  },'image/jpeg',0.92);
-}
-
-// ── PDFs ──
-async function handlePdfUpload(files) {
-  if(!currentChantier||!files.length) return;
-  showLoader('Envoi de '+files.length+' PDF(s)...');
-  try {
-    for(const f of files){
-      const d=await uploadFile(f,'documents','raw');
-      currentChantier.pdfs.push({url:d.secure_url,publicId:d.public_id,name:f.name,size:f.size,uploadedAt:new Date().toISOString()});
-    }
-    await saveAndRefresh(); renderPdfs(); toast(files.length+' PDF(s) envoyé(s) !');
-  } catch(e){toast('Erreur : '+e.message,'error');}
-  hideLoader(); document.getElementById('pdf-input').value='';
-}
-
-function renderPdfs() {
-  const l=document.getElementById('pdf-list');
-  if(!currentChantier.pdfs.length){l.innerHTML='';return;}
-  l.innerHTML=currentChantier.pdfs.map((p,i)=>`
-    <div class="pdf-item">
-      <span style="font-size:26px;">📋</span>
-      <div style="flex:1;min-width:0;">
+  const pdfsHtml = pdfs.length ? `
+    <div class="section-label">📄 Documents techniques (${pdfs.length})</div>
+    ${pdfs.map(p=>`
+      <div class="pdf-item">
+        <span style="font-size:28px;">📋</span>
         <div class="pdf-name">${p.name}</div>
-        <div class="pdf-size">${(p.size/1024).toFixed(0)} Ko</div>
+        <a class="dl-btn" href="${p.url}" target="_blank" download>⬇ Télécharger</a>
+      </div>`).join('')}` : '';
+
+  const notesHtml = notes.length ? `
+    <div class="section-label">📝 Notes & Suivi (${notes.length})</div>
+    ${notes.map(n=>`
+      <div class="note-item">
+        <div class="note-date">📅 ${new Date(n.date).toLocaleDateString('fr-FR',{day:'2-digit',month:'long',year:'numeric',hour:'2-digit',minute:'2-digit'})}</div>
+        <div class="note-text">${n.text}</div>
+      </div>`).join('')}` : '';
+
+  document.getElementById('app').innerHTML = `
+    <div class="hero">
+      <h1>${c.nom}</h1>
+      <div class="subtitle">👤 ${c.client}${c.adresse?' &nbsp;•&nbsp; 📍 '+c.adresse:''}</div>
+      <div class="badges">
+        <span class="badge">📸 ${photos.length} photo(s)</span>
+        <span class="badge">📄 ${pdfs.length} document(s)</span>
+        <span class="badge">📝 ${notes.length} note(s)</span>
       </div>
-      <a href="${p.url}" target="_blank" class="btn btn-secondary" style="padding:8px 12px;font-size:13px;">↗ Voir</a>
-      <button class="btn btn-danger" onclick="deletePdf(${i})">✕</button>
-    </div>`).join('');
+    </div>
+    <div class="section">
+      ${photosHtml}
+      ${pdfsHtml}
+      ${notesHtml}
+      ${!photos.length&&!pdfs.length&&!notes.length?'<div class="error-box"><div class="big">📭</div><p>Aucun contenu disponible pour l\'instant.</p></div>':''}
+    </div>`;
 }
 
-async function deletePdf(i) {
-  if(!confirm('Supprimer ce document ?')) return;
-  currentChantier.pdfs.splice(i,1);
-  showLoader('Mise à jour...');
-  await saveAndRefresh(); renderPdfs(); hideLoader();
+function showError(msg) {
+  document.getElementById('app').innerHTML=`<div class="error-box"><div class="big">⚠️</div><p>${msg}</p></div>`;
 }
+function openLightbox(url) {
+  document.getElementById('lightbox-img').src=url;
+  document.getElementById('lightbox-dl').href=url;
+  document.getElementById('lightbox').classList.add('show');
+}
+function closeLightbox(){ document.getElementById('lightbox').classList.remove('show'); }
 
-// ── QR CODE ──
-function genererQR() {
-  if(!currentChantier) return;
-  // URL courte : juste l'ID du chantier dans le hash
-  const url = GALLERY_BASE + '#' + currentChantier.id;
-  document.getElementById('qr-link-text').textContent=url;
-  document.getElementById('qr-subtitle').textContent=currentChantier.nom+' — '+currentChantier.client;
-  const div=document.getElementById('qrcode');
-  div.innerHTML='';
-  new QRCode(div,{text:url,width:180,height:180,colorDark:'#1A1814',colorLight:'#FFFFFF',correctLevel:QRCode.CorrectLevel.M});
-  document.getElementById('qr-modal').classList.add('show');
-}
-function closeQRModal(){document.getElementById('qr-modal').classList.remove('show');}
-function downloadQR(){
-  const c=document.querySelector('#qrcode canvas');
-  if(!c) return;
-  const a=document.createElement('a');
-  a.download='QR_'+currentChantier.nom+'.png';
-  a.href=c.toDataURL(); a.click();
-}
-function copyLink(){
-  navigator.clipboard.writeText(document.getElementById('qr-link-text').textContent)
-    .then(()=>toast('Lien copié !')).catch(()=>toast('Erreur copie','error'));
-}
-
-// ── DRAG & DROP ──
-const dz=document.getElementById('photo-drop-zone');
-dz.addEventListener('dragover',e=>{e.preventDefault();dz.style.borderColor='var(--orange)';});
-dz.addEventListener('dragleave',()=>dz.style.borderColor='');
-dz.addEventListener('drop',e=>{e.preventDefault();dz.style.borderColor='';handlePhotoUpload(e.dataTransfer.files);});
-
-// ── INIT ──
-(async()=>{
-  showLoader('Chargement des chantiers...');
-  try { chantiers=await loadChantiers(); renderChantiers(); }
-  catch(e){ toast('Erreur chargement : '+e.message,'error'); }
-  hideLoader();
-})();
+init();
 </script>
 </body>
 </html>
