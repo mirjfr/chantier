@@ -491,8 +491,16 @@ async function handlePdfUpload(files) {
   showLoader('Envoi de '+files.length+' PDF(s)...');
   try {
     for(const f of files){
-      const d=await uploadFile(f,'documents','raw');
-      current.pdfs.push({url:d.secure_url,name:f.name,size:f.size,uploadedAt:new Date().toISOString()});
+      const d = await uploadFile(f,'documents','raw');
+      // On stocke l URL Cloudinary + URL Google Docs Viewer
+      const googleUrl = 'https://docs.google.com/viewer?url=' + encodeURIComponent(d.secure_url);
+      current.pdfs.push({
+        url: d.secure_url,
+        viewUrl: googleUrl,
+        name: f.name,
+        size: f.size,
+        uploadedAt: new Date().toISOString()
+      });
     }
     await saveAll(); renderPdfs(); toast(files.length+' PDF(s) envoyé(s) !');
   } catch(e){ toast('Erreur : '+e.message,'err'); }
