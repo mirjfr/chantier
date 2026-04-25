@@ -12,61 +12,116 @@
   header { background:var(--dark2); padding:18px 24px; border-bottom:1px solid rgba(200,184,154,0.15); }
   .logo { font-family:'DM Serif Display',serif; font-size:22px; color:var(--orange); }
   .logo span { color:var(--sand); font-style:italic; }
-  .hero { padding:32px 24px 16px; max-width:960px; margin:0 auto; }
-  h1 { font-family:'DM Serif Display',serif; font-size:30px; color:var(--cream); margin-bottom:6px; }
-  .subtitle { color:var(--sand); font-size:15px; margin-bottom:14px; }
+  .hero { padding:28px 20px 12px; max-width:960px; margin:0 auto; }
+  h1 { font-family:'DM Serif Display',serif; font-size:28px; color:var(--cream); margin-bottom:6px; }
+  .subtitle { color:var(--sand); font-size:14px; margin-bottom:14px; }
   .badges { display:flex; gap:8px; flex-wrap:wrap; }
   .badge { background:rgba(232,101,26,0.1); color:var(--orange); border:1px solid rgba(232,101,26,0.2); padding:5px 14px; border-radius:20px; font-size:13px; }
-  .section { max-width:960px; margin:0 auto; padding:0 24px 32px; }
-  .section-label { font-size:13px; font-weight:600; text-transform:uppercase; letter-spacing:1px; color:var(--orange); margin:28px 0 16px; }
-  .photo-grid { display:grid; grid-template-columns:repeat(auto-fill,minmax(180px,1fr)); gap:12px; }
-  .photo-item { border-radius:12px; overflow:hidden; position:relative; aspect-ratio:1; background:rgba(255,255,255,0.05); }
-  .photo-item img { width:100%; height:100%; object-fit:cover; cursor:pointer; transition:transform 0.2s; display:block; }
-  .photo-item img:hover { transform:scale(1.04); }
-  .photo-dl { position:absolute; bottom:8px; right:8px; background:rgba(0,0,0,0.75); color:white; border-radius:8px; padding:6px 10px; font-size:12px; text-decoration:none; }
-  .pdf-item { display:flex; align-items:center; gap:14px; background:rgba(255,255,255,0.04); border:1px solid rgba(200,184,154,0.1); border-radius:12px; padding:16px; margin-bottom:10px; }
-  .pdf-name { flex:1; font-size:15px; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
-  .dl-btn { background:var(--orange); color:white; padding:10px 18px; border-radius:8px; text-decoration:none; font-size:14px; font-weight:600; white-space:nowrap; }
+  .section { max-width:960px; margin:0 auto; padding:0 20px 32px; }
+  .section-label { font-size:13px; font-weight:600; text-transform:uppercase; letter-spacing:1px; color:var(--orange); margin:28px 0 14px; }
+
+  /* PHOTOS */
+  .photo-grid { display:grid; grid-template-columns:repeat(auto-fill,minmax(160px,1fr)); gap:10px; }
+  .photo-item { border-radius:12px; overflow:hidden; background:rgba(255,255,255,0.05); border:1px solid rgba(200,184,154,0.1); }
+  .photo-item img { width:100%; aspect-ratio:1; object-fit:cover; display:block; cursor:pointer; }
+  .photo-actions { display:flex; gap:6px; padding:8px; }
+  .btn-view { flex:1; background:rgba(200,184,154,0.1); border:none; border-radius:8px; padding:8px; color:var(--sand); font-size:13px; cursor:pointer; font-family:'DM Sans',sans-serif; }
+  .btn-dl { flex:1; background:var(--orange); border:none; border-radius:8px; padding:8px; color:white; font-size:13px; font-weight:600; cursor:pointer; font-family:'DM Sans',sans-serif; }
+  .btn-dl:disabled { opacity:0.6; cursor:wait; }
+
+  /* PDFs */
+  .pdf-item { display:flex; align-items:center; gap:12px; background:rgba(255,255,255,0.04); border:1px solid rgba(200,184,154,0.1); border-radius:12px; padding:14px; margin-bottom:10px; }
+  .pdf-name { flex:1; font-size:14px; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
+  .btn-pdf-dl { background:var(--orange); color:white; padding:10px 14px; border-radius:8px; border:none; font-size:13px; font-weight:600; cursor:pointer; font-family:'DM Sans',sans-serif; white-space:nowrap; text-decoration:none; display:inline-flex; align-items:center; }
+  .btn-pdf-voir { background:rgba(200,184,154,0.1); color:var(--sand); padding:10px 14px; border-radius:8px; border:1px solid rgba(200,184,154,0.2); font-size:13px; font-weight:600; font-family:'DM Sans',sans-serif; white-space:nowrap; text-decoration:none; display:inline-flex; align-items:center; }
+
+  /* NOTES */
   .note-item { background:rgba(255,255,255,0.04); border:1px solid rgba(200,184,154,0.1); border-radius:12px; padding:16px; margin-bottom:10px; }
   .note-date { font-size:11px; color:var(--sand); margin-bottom:8px; }
   .note-text { font-size:14px; line-height:1.6; white-space:pre-wrap; }
-  .lightbox { display:none; position:fixed; inset:0; background:rgba(0,0,0,0.96); z-index:1000; align-items:center; justify-content:center; flex-direction:column; gap:16px; }
+
+  /* LIGHTBOX */
+  .lightbox { display:none; position:fixed; inset:0; background:rgba(0,0,0,0.96); z-index:1000; flex-direction:column; align-items:center; justify-content:center; gap:16px; padding:20px; }
   .lightbox.show { display:flex; }
-  .lightbox img { max-width:95vw; max-height:82vh; object-fit:contain; border-radius:8px; }
-  .lightbox-close { position:absolute; top:20px; right:20px; color:white; font-size:28px; cursor:pointer; background:rgba(255,255,255,0.1); border-radius:50%; width:44px; height:44px; display:flex; align-items:center; justify-content:center; }
-  .lightbox-dl { background:var(--orange); color:white; padding:12px 24px; border-radius:10px; text-decoration:none; font-size:15px; font-weight:600; }
+  .lightbox img { max-width:100%; max-height:75vh; object-fit:contain; border-radius:8px; }
+  .lightbox-close { position:absolute; top:16px; right:16px; color:white; font-size:24px; cursor:pointer; background:rgba(255,255,255,0.15); border-radius:50%; width:40px; height:40px; display:flex; align-items:center; justify-content:center; border:none; }
+  .lightbox-btns { display:flex; gap:10px; }
+  .lightbox-dl { background:var(--orange); color:white; padding:12px 24px; border-radius:10px; font-size:15px; font-weight:600; border:none; cursor:pointer; font-family:'DM Sans',sans-serif; }
+
+  /* LOADER */
   .loader-page { display:flex; flex-direction:column; align-items:center; justify-content:center; min-height:60vh; gap:16px; color:var(--sand); }
   .spinner { width:44px; height:44px; border:3px solid rgba(232,101,26,0.2); border-top-color:var(--orange); border-radius:50%; animation:spin 0.8s linear infinite; }
   @keyframes spin { to { transform:rotate(360deg); } }
   .error-box { text-align:center; padding:60px 24px; color:var(--sand); }
   .error-box .big { font-size:48px; margin-bottom:16px; }
-  @media(max-width:600px) { .photo-grid{grid-template-columns:repeat(auto-fill,minmax(140px,1fr));} .hero,.section{padding-left:14px;padding-right:14px;} }
+
+  /* TOAST */
+  .toast { position:fixed; bottom:20px; left:50%; transform:translateX(-50%) translateY(80px); background:var(--dark2); border:1px solid rgba(200,184,154,0.2); border-radius:10px; padding:10px 20px; color:var(--cream); font-size:14px; z-index:2000; transition:transform 0.3s; white-space:nowrap; }
+  .toast.show { transform:translateX(-50%) translateY(0); }
+
+  @media(max-width:600px) { .hero,.section{padding-left:14px;padding-right:14px;} .photo-grid{grid-template-columns:repeat(2,1fr);} }
 </style>
 </head>
 <body>
 <header><div class="logo">Chantier<span>Pro</span></div></header>
 <div id="app">
-  <div class="loader-page"><div class="spinner"></div><div>Chargement de la galerie...</div></div>
+  <div class="loader-page"><div class="spinner"></div><div>Chargement...</div></div>
 </div>
-<div class="lightbox" id="lightbox" onclick="closeLightbox()">
-  <div class="lightbox-close">✕</div>
+
+<div class="lightbox" id="lightbox">
+  <button class="lightbox-close" onclick="closeLightbox()">✕</button>
   <img id="lightbox-img" src="" alt="">
-  <a id="lightbox-dl" class="lightbox-dl" href="" download onclick="event.stopPropagation()">⬇ Télécharger</a>
+  <div class="lightbox-btns">
+    <button class="lightbox-dl" onclick="telecharger(currentUrl, currentName)">⬇ Télécharger</button>
+    <button class="lightbox-dl" style="background:rgba(200,184,154,0.15);" onclick="closeLightbox()">Fermer</button>
+  </div>
 </div>
+
+<div class="toast" id="toast"></div>
+
 <script>
 const JSONBIN_KEY = '$2a$10$nEXjNGx96Wh6f9zC4p145OmJ.ux/yVXbLEG5owWYJdSVNL/vI4bgO';
+let currentUrl = '', currentName = '';
+
+function showToast(msg) {
+  const el=document.getElementById('toast');
+  el.textContent=msg; el.classList.add('show');
+  clearTimeout(el._t); el._t=setTimeout(()=>el.classList.remove('show'),3000);
+}
+
+// Téléchargement via fetch + blob — fonctionne sur mobile et desktop
+async function telecharger(url, nom) {
+  try {
+    showToast('⏳ Téléchargement...');
+    const r = await fetch(url);
+    const blob = await r.blob();
+    const a = document.createElement('a');
+    a.href = URL.createObjectURL(blob);
+    a.download = nom || 'fichier';
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+    URL.revokeObjectURL(a.href);
+    showToast('✅ Téléchargé !');
+  } catch(e) {
+    // Fallback : ouvre dans un nouvel onglet
+    window.open(url, '_blank');
+    showToast('📂 Ouvert dans le navigateur');
+  }
+}
+
+function openLightbox(url, nom) {
+  currentUrl = url; currentName = nom;
+  document.getElementById('lightbox-img').src = url;
+  document.getElementById('lightbox').classList.add('show');
+}
+function closeLightbox() { document.getElementById('lightbox').classList.remove('show'); }
 
 async function init() {
-  // Récupère bin ID depuis l'URL (?bin=XXX) et chantier ID depuis le hash (#YYY)
   const params = new URLSearchParams(window.location.search);
-  const binId  = params.get('bin');
+  const binId = params.get('bin');
   const chantierId = window.location.hash.replace('#','').trim();
-
-  if(!binId || !chantierId) {
-    showError('Lien invalide. Scannez à nouveau le QR code.');
-    return;
-  }
-
+  if(!binId || !chantierId) { showError('Lien invalide. Scannez à nouveau le QR code.'); return; }
   try {
     const r = await fetch('https://api.jsonbin.io/v3/b/'+binId+'/latest', {
       headers: { 'X-Master-Key': JSONBIN_KEY }
@@ -74,11 +129,10 @@ async function init() {
     const d = await r.json();
     const chantiers = d.record || [];
     const c = chantiers.find(x => x.id === chantierId);
-    if(!c) throw new Error('Chantier introuvable');
+    if(!c) throw new Error('Introuvable');
     renderGallery(c);
   } catch(e) {
     showError('Impossible de charger ce chantier.<br>Vérifiez votre connexion.');
-    console.error(e);
   }
 }
 
@@ -88,26 +142,36 @@ function renderGallery(c) {
   const notes  = c.notes||[];
 
   const photosHtml = photos.length ? `
-    <div class="section-label">📸 Photos du chantier (${photos.length})</div>
+    <div class="section-label">📸 Photos (${photos.length})</div>
     <div class="photo-grid">
-      ${photos.map(p=>`
-        <div class="photo-item">
-          <img src="${p.url}" loading="lazy" onclick="openLightbox('${p.url}')">
-          <a class="photo-dl" href="${p.url}" download target="_blank">⬇</a>
-        </div>`).join('')}
+      ${photos.map((p,i)=>{
+        const nom = p.name || ('photo_'+(i+1)+'.jpg');
+        const url = p.url;
+        return `<div class="photo-item">
+          <img src="${url}" loading="lazy" onclick="openLightbox('${url}','${nom}')">
+          <div class="photo-actions">
+            <button class="btn-view" onclick="openLightbox('${url}','${nom}')">🔍 Voir</button>
+            <button class="btn-dl" onclick="telecharger('${url}','${nom}')">⬇ Sauver</button>
+          </div>
+        </div>`;
+      }).join('')}
     </div>` : '';
 
   const pdfsHtml = pdfs.length ? `
-    <div class="section-label">📄 Documents techniques (${pdfs.length})</div>
-    ${pdfs.map(p=>`
-      <div class="pdf-item">
-        <span style="font-size:28px;">📋</span>
+    <div class="section-label">📄 Documents (${pdfs.length})</div>
+    ${pdfs.map(p=>{
+      // Transforme l URL Cloudinary pour forcer le telechargement
+      const urlDl = p.url.replace('/raw/upload/', '/raw/upload/fl_attachment/');
+      return `<div class="pdf-item">
+        <span style="font-size:26px;">📋</span>
         <div class="pdf-name">${p.name}</div>
-        <a class="dl-btn" href="${p.url}" target="_blank" download>⬇ Télécharger</a>
-      </div>`).join('')}` : '';
+        <a href="${p.url}" target="_blank" class="btn-pdf-voir">👁 Voir</a>
+        <a href="${urlDl}" download="${p.name}" class="btn-pdf-dl">⬇ Sauver</a>
+      </div>`;
+    }).join('')}` : '';
 
   const notesHtml = notes.length ? `
-    <div class="section-label">📝 Notes & Suivi (${notes.length})</div>
+    <div class="section-label">📝 Notes (${notes.length})</div>
     ${notes.map(n=>`
       <div class="note-item">
         <div class="note-date">📅 ${new Date(n.date).toLocaleDateString('fr-FR',{day:'2-digit',month:'long',year:'numeric',hour:'2-digit',minute:'2-digit'})}</div>
@@ -133,12 +197,6 @@ function renderGallery(c) {
 function showError(msg) {
   document.getElementById('app').innerHTML=`<div class="error-box"><div class="big">⚠️</div><p>${msg}</p></div>`;
 }
-function openLightbox(url) {
-  document.getElementById('lightbox-img').src=url;
-  document.getElementById('lightbox-dl').href=url;
-  document.getElementById('lightbox').classList.add('show');
-}
-function closeLightbox(){ document.getElementById('lightbox').classList.remove('show'); }
 
 init();
 </script>
