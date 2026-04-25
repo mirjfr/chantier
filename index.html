@@ -554,14 +554,30 @@ function chargerCache() {
   catch(e){ return []; }
 }
 
+function showMiniLoader(txt) {
+  let el=document.getElementById('mini-loader');
+  if(!el){ el=document.createElement('div'); el.id='mini-loader';
+    el.style.cssText='position:fixed;bottom:20px;right:20px;background:#2C2820;border:1px solid rgba(200,184,154,0.2);border-radius:10px;padding:10px 16px;font-size:13px;color:#C8B89A;z-index:999;display:flex;align-items:center;gap:8px;';
+    document.body.appendChild(el);
+  }
+  el.innerHTML='<div style="width:14px;height:14px;border:2px solid rgba(232,101,26,0.3);border-top-color:#E8651A;border-radius:50%;animation:spin 0.8s linear infinite"></div>'+txt;
+  el.style.display='flex';
+}
+function hideMiniLoader(){ const el=document.getElementById('mini-loader'); if(el) el.style.display='none'; }
+
 // ── INIT ──
 (async()=>{
-  // Affiche cache local instantanement
+  // 1. Affiche cache local instantanement (0 delai)
   const cache = chargerCache();
-  if(cache.length) { chantiers=cache; renderChantiers(); }
-  else { showLoader('Premier chargement...'); }
+  if(cache.length) {
+    chantiers = cache;
+    renderChantiers();
+    showMiniLoader('Synchronisation...');
+  } else {
+    showLoader('Chargement...');
+  }
 
-  // Sync cloud en arriere-plan
+  // 2. Sync cloud en arriere-plan
   try {
     const fresh = await lireBin();
     if(JSON.stringify(fresh) !== JSON.stringify(chantiers)) {
@@ -571,6 +587,7 @@ function chargerCache() {
     }
   } catch(e){}
   hideLoader();
+  hideMiniLoader();
 })();
 </script>
 </body>
