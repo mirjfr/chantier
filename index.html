@@ -499,7 +499,7 @@ async function handlePdfUpload(files) {
       const r = await fetch('https://upload.uploadcare.com/base/', {method:'POST', body:fd});
       const d = await r.json();
       if(d.error) throw new Error(d.error);
-      const fileUrl = 'https://ucarecdn.com/' + d.file + '/' + encodeURIComponent(f.name);
+      const fileUrl = 'https://ucarecdn.com/' + d.file + '/';
       const viewUrl = 'https://docs.google.com/viewer?url=' + encodeURIComponent(fileUrl);
       current.pdfs.push({
         url: fileUrl,
