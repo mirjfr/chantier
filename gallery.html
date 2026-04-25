@@ -160,8 +160,12 @@ function renderGallery(c) {
   const pdfsHtml = pdfs.length ? `
     <div class="section-label">📄 Documents (${pdfs.length})</div>
     ${pdfs.map(p=>{
-      // Google Docs Viewer — fonctionne partout sans auth
-      const viewUrl = p.viewUrl || ('https://docs.google.com/viewer?url=' + encodeURIComponent(p.url));
+      // Corrige l URL : res.cloudinary.com ne marche pas pour raw
+      // On utilise le lien direct avec le bon domaine
+      let url = p.url;
+      url = url.replace('res.cloudinary.com', 'api.cloudinary.com/v1_1');
+      url = url.replace('/raw/upload/', '/raw/download/');
+      const viewUrl = 'https://docs.google.com/viewer?url=' + encodeURIComponent(p.url);
       return `<div class="pdf-item">
         <span style="font-size:26px;">📋</span>
         <div class="pdf-name">${p.name}</div>
