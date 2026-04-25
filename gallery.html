@@ -160,13 +160,12 @@ function renderGallery(c) {
   const pdfsHtml = pdfs.length ? `
     <div class="section-label">📄 Documents (${pdfs.length})</div>
     ${pdfs.map(p=>{
-      // Google Docs viewer pour afficher le PDF sans authentification
-      const urlVoir = 'https://docs.google.com/viewer?url=' + encodeURIComponent(p.url) + '&embedded=true';
-      const urlGoogleDl = 'https://docs.google.com/viewer?url=' + encodeURIComponent(p.url);
+      // Google Docs Viewer — fonctionne partout sans auth
+      const viewUrl = p.viewUrl || ('https://docs.google.com/viewer?url=' + encodeURIComponent(p.url));
       return `<div class="pdf-item">
         <span style="font-size:26px;">📋</span>
         <div class="pdf-name">${p.name}</div>
-        <a href="${urlGoogleDl}" target="_blank" class="btn-pdf-voir">👁 Voir & Télécharger</a>
+        <a href="${viewUrl}" target="_blank" class="btn-pdf-voir">👁 Voir & Télécharger</a>
       </div>`;
     }).join('')}` : '';
 
