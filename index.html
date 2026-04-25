@@ -275,7 +275,6 @@ async function ecrireBin(data) {
     BIN_ID = await creerBin(data);
   }
   localStorage.setItem('chantierbin_id', BIN_ID);
-  if(BIN_ID) {
   const r = await fetch(JSONBIN_URL+'/'+BIN_ID, {
     method: 'PUT',
     headers: {
