@@ -224,7 +224,7 @@ async function uploadFile(file, folder, resourceType='image') {
 // ── SAUVEGARDER CHANTIER EN JSON SUR CLOUDINARY ──
 async function saveChantier(chantier) {
   const blob=new Blob([JSON.stringify(chantier)],{type:'application/json'});
-  const file=new File([blob],'data.json',{type:'application/json'});
+  const file=new File([blob],chantier.id+'.json',{type:'application/json'});
   const fd=new FormData();
   fd.append('file',file);
   fd.append('upload_preset',UPLOAD_PRESET);
@@ -232,20 +232,42 @@ async function saveChantier(chantier) {
   const res=await fetch(`https://api.cloudinary.com/v1_1/${CLOUD_NAME}/raw/upload`,{method:'POST',body:fd});
   const data=await res.json();
   if(data.error) throw new Error(data.error.message);
+  // Met à jour l'index
+  const ids=await loadIndex();
+  if(!ids.includes(chantier.id)){ ids.unshift(chantier.id); await saveIndex(ids); }
   return data;
 }
 
-// ── CHARGER TOUS LES CHANTIERS DEPUIS CLOUDINARY ──
+// ── CHARGER L'INDEX DES CHANTIERS ──
+// On maintient un fichier index.json qui liste tous les IDs
+async function loadIndex() {
+  try {
+    const url = `https://res.cloudinary.com/${CLOUD_NAME}/raw/upload/chantiers_data/index.json?v=${Date.now()}`;
+    const res = await fetch(url);
+    if(!res.ok) return [];
+    return await res.json(); // tableau d'IDs
+  } catch(e) { return []; }
+}
+
+async function saveIndex(ids) {
+  const blob = new Blob([JSON.stringify(ids)], {type:'application/json'});
+  const file = new File([blob], 'index.json', {type:'application/json'});
+  const fd = new FormData();
+  fd.append('file', file);
+  fd.append('upload_preset', UPLOAD_PRESET);
+  fd.append('public_id', 'chantiers_data/index');
+  await fetch(`https://api.cloudinary.com/v1_1/${CLOUD_NAME}/raw/upload`, {method:'POST', body:fd});
+}
+
 async function loadChantiers() {
-  const auth=btoa(API_KEY+':'+API_SECRET);
-  const res=await fetch(`https://api.cloudinary.com/v1_1/${CLOUD_NAME}/resources/raw?prefix=chantiers_data/&max_results=100&type=upload`,{headers:{'Authorization':'Basic '+auth}});
-  const data=await res.json();
-  if(!data.resources) return [];
-  const list=[];
-  for(const r of data.resources) {
+  const ids = await loadIndex();
+  if(!ids.length) return [];
+  const list = [];
+  for(const id of ids) {
     try {
-      const jr=await fetch(r.secure_url+'?v='+Date.now());
-      list.push(await jr.json());
+      const url = `https://res.cloudinary.com/${CLOUD_NAME}/raw/upload/chantiers_data/${id}.json?v=${Date.now()}`;
+      const res = await fetch(url);
+      if(res.ok) list.push(await res.json());
     } catch(e){}
   }
   return list.sort((a,b)=>new Date(b.createdAt)-new Date(a.createdAt));
