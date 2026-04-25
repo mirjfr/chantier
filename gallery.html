@@ -14,10 +14,11 @@
   .logo span { color:var(--sand); font-style:italic; }
   .hero { padding:32px 24px 16px; max-width:960px; margin:0 auto; }
   h1 { font-family:'DM Serif Display',serif; font-size:30px; color:var(--cream); margin-bottom:6px; }
-  .subtitle { color:var(--sand); font-size:15px; margin-bottom:12px; }
-  .badge { background:rgba(232,101,26,0.1); color:var(--orange); border:1px solid rgba(232,101,26,0.2); padding:5px 14px; border-radius:20px; font-size:13px; display:inline-block; }
-  .section { max-width:960px; margin:0 auto; padding:8px 24px 24px; }
-  .section-label { font-size:13px; font-weight:600; text-transform:uppercase; letter-spacing:1px; color:var(--orange); margin:24px 0 16px; }
+  .subtitle { color:var(--sand); font-size:15px; margin-bottom:14px; }
+  .badges { display:flex; gap:8px; flex-wrap:wrap; }
+  .badge { background:rgba(232,101,26,0.1); color:var(--orange); border:1px solid rgba(232,101,26,0.2); padding:5px 14px; border-radius:20px; font-size:13px; }
+  .section { max-width:960px; margin:0 auto; padding:0 24px 24px; }
+  .section-label { font-size:13px; font-weight:600; text-transform:uppercase; letter-spacing:1px; color:var(--orange); margin:28px 0 16px; }
   .photo-grid { display:grid; grid-template-columns:repeat(auto-fill,minmax(180px,1fr)); gap:12px; }
   .photo-item { border-radius:12px; overflow:hidden; position:relative; aspect-ratio:1; background:rgba(255,255,255,0.05); }
   .photo-item img { width:100%; height:100%; object-fit:cover; cursor:pointer; transition:transform 0.2s; display:block; }
@@ -26,11 +27,13 @@
   .pdf-item { display:flex; align-items:center; gap:14px; background:rgba(255,255,255,0.04); border:1px solid rgba(200,184,154,0.1); border-radius:12px; padding:16px; margin-bottom:10px; }
   .pdf-name { flex:1; font-size:15px; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
   .dl-btn { background:var(--orange); color:white; padding:10px 18px; border-radius:8px; text-decoration:none; font-size:14px; font-weight:600; white-space:nowrap; }
-  .dl-btn:hover { opacity:0.85; }
+  .note-item { background:rgba(255,255,255,0.04); border:1px solid rgba(200,184,154,0.1); border-radius:12px; padding:16px; margin-bottom:10px; }
+  .note-date { font-size:11px; color:var(--sand); margin-bottom:8px; }
+  .note-text { font-size:14px; line-height:1.6; white-space:pre-wrap; }
   .lightbox { display:none; position:fixed; inset:0; background:rgba(0,0,0,0.96); z-index:1000; align-items:center; justify-content:center; flex-direction:column; gap:16px; }
   .lightbox.show { display:flex; }
-  .lightbox img { max-width:95vw; max-height:85vh; object-fit:contain; border-radius:8px; }
-  .lightbox-close { position:absolute; top:20px; right:20px; color:white; font-size:32px; cursor:pointer; background:rgba(0,0,0,0.5); border-radius:50%; width:44px; height:44px; display:flex; align-items:center; justify-content:center; }
+  .lightbox img { max-width:95vw; max-height:82vh; object-fit:contain; border-radius:8px; }
+  .lightbox-close { position:absolute; top:20px; right:20px; color:white; font-size:28px; cursor:pointer; background:rgba(255,255,255,0.1); border-radius:50%; width:44px; height:44px; display:flex; align-items:center; justify-content:center; }
   .lightbox-dl { background:var(--orange); color:white; padding:12px 24px; border-radius:10px; text-decoration:none; font-size:15px; font-weight:600; }
   .loader-page { display:flex; flex-direction:column; align-items:center; justify-content:center; min-height:60vh; gap:16px; color:var(--sand); }
   .spinner { width:44px; height:44px; border:3px solid rgba(232,101,26,0.2); border-top-color:var(--orange); border-radius:50%; animation:spin 0.8s linear infinite; }
@@ -41,95 +44,92 @@
 </style>
 </head>
 <body>
-
 <header><div class="logo">Chantier<span>Pro</span></div></header>
-
 <div id="app">
-  <div class="loader-page">
-    <div class="spinner"></div>
-    <div>Chargement de la galerie...</div>
-  </div>
+  <div class="loader-page"><div class="spinner"></div><div>Chargement de la galerie...</div></div>
 </div>
-
 <div class="lightbox" id="lightbox" onclick="closeLightbox()">
-  <div class="lightbox-close" onclick="closeLightbox()">✕</div>
+  <div class="lightbox-close">✕</div>
   <img id="lightbox-img" src="" alt="">
   <a id="lightbox-dl" class="lightbox-dl" href="" download onclick="event.stopPropagation()">⬇ Télécharger</a>
 </div>
-
 <script>
-const CLOUD_NAME = 'dyojhn5ng';
-const API_KEY    = '288215555649761';
-const API_SECRET = 'Vz62siUnxolJkiy-gLrHof1sQO8';
+const CLOUD = 'dyojhn5ng';
 
 async function init() {
-  // Récupère l'ID du chantier depuis le hash de l'URL
   const id = window.location.hash.replace('#','').trim();
-  if(!id) { showError('Lien invalide. Scannez à nouveau le QR code.'); return; }
-
+  if(!id){ showError('Lien invalide. Scannez à nouveau le QR code.'); return; }
   try {
-    // Charge le JSON du chantier depuis Cloudinary
-    const auth = btoa(API_KEY+':'+API_SECRET);
-    const res = await fetch(
-      `https://api.cloudinary.com/v1_1/${CLOUD_NAME}/resources/raw/upload/chantiers_data/${id}`,
-      { headers:{'Authorization':'Basic '+auth} }
-    );
-    const meta = await res.json();
-    if(meta.error) throw new Error(meta.error.message);
-
-    // Charge le contenu JSON
-    const jsonRes = await fetch(meta.secure_url+'?v='+Date.now());
-    const chantier = await jsonRes.json();
-    renderGallery(chantier);
+    const url = `https://res.cloudinary.com/${CLOUD}/raw/upload/chantiers_data/${id}?v=${Date.now()}`;
+    const res = await fetch(url);
+    if(!res.ok) throw new Error('Chantier introuvable');
+    const c = await res.json();
+    renderGallery(c);
   } catch(e) {
-    showError('Impossible de charger ce chantier. Vérifiez votre connexion.');
+    showError('Impossible de charger ce chantier.<br>Vérifiez votre connexion.');
     console.error(e);
   }
 }
 
 function renderGallery(c) {
-  const photosHtml = c.photos.length ? `
-    <div class="section-label">📸 Photos du chantier (${c.photos.length})</div>
+  const photos = c.photos||[];
+  const pdfs   = c.pdfs||[];
+  const notes  = c.notes||[];
+
+  const photosHtml = photos.length ? `
+    <div class="section-label">📸 Photos du chantier (${photos.length})</div>
     <div class="photo-grid">
-      ${c.photos.map(p=>`
+      ${photos.map(p=>`
         <div class="photo-item">
           <img src="${p.url}" loading="lazy" onclick="openLightbox('${p.url}')">
           <a class="photo-dl" href="${p.url}" download target="_blank">⬇</a>
         </div>`).join('')}
     </div>` : '';
 
-  const pdfsHtml = c.pdfs.length ? `
-    <div class="section-label">📄 Documents techniques (${c.pdfs.length})</div>
-    ${c.pdfs.map(p=>`
+  const pdfsHtml = pdfs.length ? `
+    <div class="section-label">📄 Documents techniques (${pdfs.length})</div>
+    ${pdfs.map(p=>`
       <div class="pdf-item">
         <span style="font-size:28px;">📋</span>
         <div class="pdf-name">${p.name}</div>
         <a class="dl-btn" href="${p.url}" target="_blank" download>⬇ Télécharger</a>
       </div>`).join('')}` : '';
 
+  const notesHtml = notes.length ? `
+    <div class="section-label">📝 Notes & Suivi (${notes.length})</div>
+    ${notes.map(n=>`
+      <div class="note-item">
+        <div class="note-date">📅 ${new Date(n.date).toLocaleDateString('fr-FR',{day:'2-digit',month:'long',year:'numeric',hour:'2-digit',minute:'2-digit'})}</div>
+        <div class="note-text">${n.text}</div>
+      </div>`).join('')}` : '';
+
   document.getElementById('app').innerHTML = `
     <div class="hero">
       <h1>${c.nom}</h1>
-      <div class="subtitle">👤 Client : ${c.client}${c.adresse?' &nbsp;•&nbsp; 📍 '+c.adresse:''}</div>
-      <span class="badge">📸 ${c.photos.length} photo(s) &nbsp;•&nbsp; 📄 ${c.pdfs.length} document(s)</span>
+      <div class="subtitle">👤 ${c.client}${c.adresse?' &nbsp;•&nbsp; 📍 '+c.adresse:''}</div>
+      <div class="badges">
+        <span class="badge">📸 ${photos.length} photo(s)</span>
+        <span class="badge">📄 ${pdfs.length} document(s)</span>
+        <span class="badge">📝 ${notes.length} note(s)</span>
+      </div>
     </div>
     <div class="section">
       ${photosHtml}
       ${pdfsHtml}
-      ${!c.photos.length && !c.pdfs.length ? '<div class="error-box"><div class="big">📭</div><p>Aucun fichier disponible pour l\'instant.</p></div>' : ''}
+      ${notesHtml}
+      ${!photos.length&&!pdfs.length&&!notes.length?'<div class="error-box"><div class="big">📭</div><p>Aucun contenu disponible pour l\'instant.</p></div>':''}
     </div>`;
 }
 
 function showError(msg) {
   document.getElementById('app').innerHTML=`<div class="error-box"><div class="big">⚠️</div><p>${msg}</p></div>`;
 }
-
 function openLightbox(url) {
   document.getElementById('lightbox-img').src=url;
   document.getElementById('lightbox-dl').href=url;
   document.getElementById('lightbox').classList.add('show');
 }
-function closeLightbox() { document.getElementById('lightbox').classList.remove('show'); }
+function closeLightbox(){ document.getElementById('lightbox').classList.remove('show'); }
 
 init();
 </script>
