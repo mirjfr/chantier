@@ -491,8 +491,8 @@ async function handlePdfUpload(files) {
   showLoader('Envoi de '+files.length+' PDF(s)...');
   try {
     for(const f of files){
-      const d = await uploadFile(f,'documents','raw');
-      // On stocke l URL Cloudinary + URL Google Docs Viewer
+      // Upload en 'image' avec format pdf — URL publique garantie
+      const d = await uploadFile(f,'documents','image');
       const googleUrl = 'https://docs.google.com/viewer?url=' + encodeURIComponent(d.secure_url);
       current.pdfs.push({
         url: d.secure_url,
