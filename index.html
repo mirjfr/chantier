@@ -254,11 +254,20 @@ async function creerBin(data) {
 
 async function lireBin() {
   if(!BIN_ID) return [];
-  const r = await fetch(JSONBIN_URL+'/'+BIN_ID+'/latest', {
-    headers: { 'X-Master-Key': JSONBIN_KEY }
-  });
-  const d = await r.json();
-  return d.record || [];
+  const controller = new AbortController();
+  const timeout = setTimeout(() => controller.abort(), 7000);
+  try {
+    const r = await fetch(JSONBIN_URL+'/'+BIN_ID+'/latest', {
+      headers: { 'X-Master-Key': JSONBIN_KEY },
+      signal: controller.signal
+    });
+    clearTimeout(timeout);
+    const d = await r.json();
+    return d.record || [];
+  } catch(e) {
+    clearTimeout(timeout);
+    throw e;
+  }
 }
 
 async function ecrireBin(data) {
@@ -586,17 +595,13 @@ function hideMiniLoader(){ const el=document.getElementById('mini-loader'); if(e
 
 // ── INIT ──
 (async()=>{
-  // 1. Affiche cache local instantanement (0 delai)
+  // 1. Affiche TOUJOURS le cache local en premier (instantane)
   const cache = chargerCache();
-  if(cache.length) {
-    chantiers = cache;
-    renderChantiers();
-    showMiniLoader('Synchronisation...');
-  } else {
-    showLoader('Chargement...');
-  }
+  chantiers = cache;
+  renderChantiers(); // affiche meme si vide
 
-  // 2. Sync cloud en arriere-plan
+  // 2. Sync cloud en arriere-plan sans bloquer
+  showMiniLoader('Synchronisation...');
   try {
     const fresh = await lireBin();
     if(JSON.stringify(fresh) !== JSON.stringify(chantiers)) {
@@ -604,8 +609,9 @@ function hideMiniLoader(){ const el=document.getElementById('mini-loader'); if(e
       sauvegarderCache(fresh);
       renderChantiers();
     }
-  } catch(e){}
-  hideLoader();
+  } catch(e){
+    // Si pas de connexion, on garde le cache - pas de message d erreur
+  }
   hideMiniLoader();
 })();
 </script>
