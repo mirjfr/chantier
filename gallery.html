@@ -17,7 +17,7 @@
   .subtitle { color:var(--sand); font-size:15px; margin-bottom:14px; }
   .badges { display:flex; gap:8px; flex-wrap:wrap; }
   .badge { background:rgba(232,101,26,0.1); color:var(--orange); border:1px solid rgba(232,101,26,0.2); padding:5px 14px; border-radius:20px; font-size:13px; }
-  .section { max-width:960px; margin:0 auto; padding:0 24px 24px; }
+  .section { max-width:960px; margin:0 auto; padding:0 24px 32px; }
   .section-label { font-size:13px; font-weight:600; text-transform:uppercase; letter-spacing:1px; color:var(--orange); margin:28px 0 16px; }
   .photo-grid { display:grid; grid-template-columns:repeat(auto-fill,minmax(180px,1fr)); gap:12px; }
   .photo-item { border-radius:12px; overflow:hidden; position:relative; aspect-ratio:1; background:rgba(255,255,255,0.05); }
@@ -54,16 +54,27 @@
   <a id="lightbox-dl" class="lightbox-dl" href="" download onclick="event.stopPropagation()">⬇ Télécharger</a>
 </div>
 <script>
-const CLOUD = 'dyojhn5ng';
+const JSONBIN_KEY = '$2a$10$nEXjNGx96Wh6f9zC4p145OmJ.ux/yVXbLEG5owWYJdSVNL/vI4bgO';
 
 async function init() {
-  const id = window.location.hash.replace('#','').trim();
-  if(!id){ showError('Lien invalide. Scannez à nouveau le QR code.'); return; }
+  // Récupère bin ID depuis l'URL (?bin=XXX) et chantier ID depuis le hash (#YYY)
+  const params = new URLSearchParams(window.location.search);
+  const binId  = params.get('bin');
+  const chantierId = window.location.hash.replace('#','').trim();
+
+  if(!binId || !chantierId) {
+    showError('Lien invalide. Scannez à nouveau le QR code.');
+    return;
+  }
+
   try {
-    const url = `https://res.cloudinary.com/${CLOUD}/raw/upload/chantiers_data/${id}?v=${Date.now()}`;
-    const res = await fetch(url);
-    if(!res.ok) throw new Error('Chantier introuvable');
-    const c = await res.json();
+    const r = await fetch('https://api.jsonbin.io/v3/b/'+binId+'/latest', {
+      headers: { 'X-Master-Key': JSONBIN_KEY }
+    });
+    const d = await r.json();
+    const chantiers = d.record || [];
+    const c = chantiers.find(x => x.id === chantierId);
+    if(!c) throw new Error('Chantier introuvable');
     renderGallery(c);
   } catch(e) {
     showError('Impossible de charger ce chantier.<br>Vérifiez votre connexion.');
@@ -114,10 +125,8 @@ function renderGallery(c) {
       </div>
     </div>
     <div class="section">
-      ${photosHtml}
-      ${pdfsHtml}
-      ${notesHtml}
-      ${!photos.length&&!pdfs.length&&!notes.length?'<div class="error-box"><div class="big">📭</div><p>Aucun contenu disponible pour l\'instant.</p></div>':''}
+      ${photosHtml}${pdfsHtml}${notesHtml}
+      ${!photos.length&&!pdfs.length&&!notes.length?'<div class="error-box"><div class="big">📭</div><p>Aucun contenu disponible.</p></div>':''}
     </div>`;
 }
 
