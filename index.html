@@ -1,272 +1,997 @@
-<!DOCTYPE html>
+ <!DOCTYPE html>
 <html lang="fr">
 <head>
 <meta charset="UTF-8">
-<title>Devis ELEVA SRL</title>
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>ChantierPro</title>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
 <style>
-* { box-sizing: border-box; margin: 0; padding: 0; }
-body { font-family: Arial, Helvetica, sans-serif; font-size: 8.5px; color: #000; background: #fff; }
-.page { max-width: 750px; margin: 0 auto; padding: 8px; }
+  @import url('https://fonts.googleapis.com/css2?family=DM+Serif+Display:ital@0;1&family=DM+Sans:wght@300;400;500;600&display=swap');
+  :root { --orange:#E8651A; --orange-light:#F4894A; --dark:#1A1814; --dark2:#2C2820; --mid:#4A443C; --sand:#C8B89A; --cream:#F8F4EE; --danger:#E84545; --success:#4CAF82; }
+  * { margin:0; padding:0; box-sizing:border-box; }
+  body { font-family:'DM Sans',sans-serif; background:var(--dark); color:var(--cream); min-height:100vh; }
 
-.hdr { display: grid; grid-template-columns: 195px 1fr; gap: 7px; margin-bottom: 6px; }
-.logo { border: 2px solid #cc0000; border-radius: 3px; padding: 5px 7px; }
-.logo-name { color: #cc0000; font-size: 20px; font-weight: 900; letter-spacing: 3px; line-height: 1; }
-.logo-tech { font-size: 7.5px; font-weight: 900; margin: 2px 0; }
-.logo-srv  { font-size: 7px; color: #444; line-height: 1.4; }
-.logo-crd  { font-size: 7px; line-height: 1.5; margin-top: 4px; border-top: 1px solid #ddd; padding-top: 3px; color: #333; }
-.logo-exp  { color: #cc0000; font-weight: 700; font-size: 7px; margin-top: 2px; }
+  header { background:var(--dark2); border-bottom:1px solid rgba(200,184,154,0.15); padding:14px 20px; display:flex; align-items:center; justify-content:space-between; position:sticky; top:0; z-index:100; }
+  .logo { font-family:'DM Serif Display',serif; font-size:20px; color:var(--orange); }
+  .logo span { color:var(--sand); font-style:italic; }
+  .header-btns { display:flex; gap:6px; align-items:center; }
+  .sync-btn { background:rgba(200,184,154,0.1); border:1px solid rgba(200,184,154,0.2); border-radius:8px; padding:7px 12px; color:var(--sand); font-size:12px; cursor:pointer; font-family:'DM Sans',sans-serif; }
+  .offline-badge { background:rgba(232,69,69,0.2); border:1px solid rgba(232,69,69,0.4); border-radius:8px; padding:5px 10px; color:var(--danger); font-size:12px; display:none; }
+  .offline-badge.show { display:block; }
 
-.cbox { border: 1px solid #aaa; width: 100%; border-collapse: collapse; }
-.cbox td { padding: 2.5px 5px; border-bottom: 1px solid #ddd; font-size: 8.5px; }
-.cbox .lbl { color: #555; width: 55px; border-right: 1px solid #ddd; }
-.cname td  { font-size: 11px; font-weight: 700; text-align: center; padding: 4px 5px; }
+  .tabs { display:flex; gap:4px; background:var(--dark); padding:10px 20px 0; border-bottom:1px solid rgba(200,184,154,0.1); overflow-x:auto; }
+  .tab { padding:9px 16px; border:none; background:transparent; color:var(--sand); font-family:'DM Sans',sans-serif; font-size:13px; font-weight:500; cursor:pointer; border-radius:8px 8px 0 0; transition:all 0.2s; white-space:nowrap; }
+  .tab.active { background:var(--dark2); color:var(--orange); border-top:2px solid var(--orange); }
 
-.si { display: grid; grid-template-columns: 1fr 1fr; gap: 6px; margin-bottom: 6px; }
-.rt { width: 100%; border-collapse: collapse; border: 1px solid #aaa; }
-.rh { background: #cc0000; color: #fff; font-weight: 700; text-align: center; padding: 3.5px; font-size: 8.5px; text-transform: uppercase; letter-spacing: .04em; }
-.rt td { padding: 2px 5px; border-bottom: 1px solid #eee; font-size: 8px; }
-.rt .l { color: #444; width: 50%; }
-.rt .v { font-weight: 600; text-align: center; }
-.rt tr:nth-child(even) td { background: #fafafa; }
+  .page { display:none; padding:20px; max-width:900px; margin:0 auto; }
+  .page.active { display:block; }
 
-.ot { width: 100%; border-collapse: collapse; border: 1px solid #aaa; margin-bottom: 6px; }
-.omh td { background: #cc0000; color: #fff; font-weight: 700; text-align: center; padding: 4px; font-size: 9.5px; letter-spacing: .07em; }
-.osh td  { background: #cc0000; color: #fff; font-weight: 700; padding: 2px 5px; text-align: center; font-size: 8.5px; }
-.och td  { background: #e0e0e0; font-weight: 700; padding: 2.5px 5px; border: 1px solid #aaa; text-align: center; font-size: 8px; }
-.ot td   { padding: 2px 5px; border: 1px solid #ddd; font-size: 8px; vertical-align: middle; }
-.ot tr:nth-child(even) td { background: #fafafa; }
-.tn  { text-align: center; width: 22px; background: #f5f5f5 !important; }
-.td  { text-align: center; width: 100px; }
-.tp  { text-align: right; width: 125px; font-weight: 600; }
-.ti  { text-align: right; font-style: italic; color: #555; }
-.hl  { background: #FFD700 !important; font-weight: 700; }
+  .section-title { font-family:'DM Serif Display',serif; font-size:24px; color:var(--cream); margin-bottom:4px; }
+  .section-sub { color:var(--sand); font-size:13px; margin-bottom:20px; }
 
-.note { font-size: 7px; color: #555; margin: 3px 0; line-height: 1.4; }
-.pay  { font-size: 8px; margin: 3px 0; line-height: 1.4; }
-.val  { color: #cc0000; font-weight: 700; font-size: 8px; margin: 2px 0; }
+  .card { background:var(--dark2); border:1px solid rgba(200,184,154,0.12); border-radius:16px; padding:20px; margin-bottom:16px; }
+  .card-title { font-size:12px; font-weight:600; text-transform:uppercase; letter-spacing:1px; color:var(--orange); margin-bottom:14px; }
 
-.st { display: grid; grid-template-columns: 1fr 1fr 170px; gap: 8px; margin-top: 6px; align-items: end; }
-.sb { font-size: 8px; line-height: 1.7; }
-.sl { border-top: 1px solid #aaa; padding-top: 2px; margin-top: 12px; font-size: 7.5px; }
-.sc { font-size: 8px; text-align: center; }
-.tb { border: 1px solid #aaa; }
-.tr { display: flex; justify-content: space-between; padding: 3px 7px; border-bottom: 1px solid #ddd; font-size: 10px; }
-.trh { background: #FFD700; font-weight: 700; font-size: 12px; }
-.trt { background: #cc0000; color: #fff; font-weight: 700; font-size: 12px; border-bottom: none; }
+  .form-group { margin-bottom:14px; }
+  label { display:block; font-size:13px; font-weight:500; color:var(--sand); margin-bottom:5px; }
+  input, textarea, select { width:100%; background:rgba(255,255,255,0.05); border:1px solid rgba(200,184,154,0.2); border-radius:10px; padding:11px 14px; color:var(--cream); font-family:'DM Sans',sans-serif; font-size:14px; outline:none; transition:border-color 0.2s; }
+  input:focus, textarea:focus, select:focus { border-color:var(--orange); }
+  select option { background:var(--dark2); }
+  textarea { resize:vertical; min-height:80px; }
 
-.pbtn-bar { text-align: center; padding: 12px 0 8px; background: #f0f0f0; }
-.pbtn { background: #cc0000; color: #fff; border: none; padding: 10px 32px; font-size: 13px; font-weight: 700; border-radius: 5px; cursor: pointer; }
-.pbtn-note { font-size: 11px; color: #666; margin-top: 6px; }
+  .btn { padding:11px 20px; border:none; border-radius:10px; font-family:'DM Sans',sans-serif; font-size:14px; font-weight:600; cursor:pointer; transition:all 0.2s; display:inline-flex; align-items:center; gap:7px; }
+  .btn-primary { background:var(--orange); color:white; }
+  .btn-primary:hover { background:var(--orange-light); }
+  .btn-secondary { background:rgba(200,184,154,0.1); color:var(--sand); border:1px solid rgba(200,184,154,0.2); }
+  .btn-danger { background:rgba(232,69,69,0.15); color:var(--danger); border:1px solid rgba(232,69,69,0.3); font-size:12px; padding:7px 11px; }
+  .btn-full { width:100%; justify-content:center; }
+  .btn-sm { padding:7px 12px; font-size:12px; }
 
-@media print {
-  .pbtn-bar { display: none !important; }
-  html { zoom: 0.79; }
-  body { font-size: 8px; }
-  .page { padding: 4px; max-width: 100%; }
-  @page { margin: 0.3cm; size: A4; }
-  * { -webkit-print-color-adjust: exact !important; print-color-adjust: exact !important; }
-}
+  /* STATUS BADGES */
+  .status-badge { font-size:11px; padding:3px 10px; border-radius:20px; font-weight:600; display:inline-block; }
+  .status-encours { background:rgba(232,101,26,0.15); color:var(--orange); border:1px solid rgba(232,101,26,0.3); }
+  .status-termine { background:rgba(76,175,130,0.15); color:var(--success); border:1px solid rgba(76,175,130,0.3); }
+  .status-attente { background:rgba(200,184,154,0.15); color:var(--sand); border:1px solid rgba(200,184,154,0.3); }
+  .status-pause { background:rgba(232,69,69,0.15); color:var(--danger); border:1px solid rgba(232,69,69,0.3); }
+
+  /* CHANTIER CARDS */
+  .chantier-grid { display:grid; grid-template-columns:repeat(auto-fill,minmax(240px,1fr)); gap:14px; margin-top:14px; }
+  .chantier-card { background:var(--dark2); border:1px solid rgba(200,184,154,0.12); border-radius:14px; padding:18px; cursor:pointer; transition:all 0.2s; position:relative; overflow:hidden; }
+  .chantier-card::before { content:''; position:absolute; top:0; left:0; width:4px; height:100%; background:var(--orange); border-radius:14px 0 0 14px; }
+  .chantier-card.termine::before { background:var(--success); }
+  .chantier-card.attente::before { background:var(--sand); }
+  .chantier-card.pause::before { background:var(--danger); }
+  .chantier-card:hover { border-color:var(--orange); transform:translateY(-2px); box-shadow:0 8px 24px rgba(232,101,26,0.15); }
+  .chantier-name { font-family:'DM Serif Display',serif; font-size:17px; color:var(--cream); margin-bottom:3px; }
+  .chantier-client { font-size:12px; color:var(--sand); margin-bottom:4px; }
+  .chantier-adresse { font-size:11px; color:var(--mid); margin-bottom:10px; }
+  .chantier-stats { display:flex; gap:6px; flex-wrap:wrap; margin-top:8px; }
+  .stat-badge { font-size:11px; padding:3px 8px; border-radius:20px; background:rgba(232,101,26,0.1); color:var(--orange); border:1px solid rgba(232,101,26,0.2); }
+
+  /* FILTER BAR */
+  .filter-bar { display:flex; gap:8px; margin-bottom:14px; flex-wrap:wrap; }
+  .filter-btn { padding:6px 14px; border:1px solid rgba(200,184,154,0.2); border-radius:20px; background:transparent; color:var(--sand); font-size:12px; cursor:pointer; font-family:'DM Sans',sans-serif; transition:all 0.2s; }
+  .filter-btn.active { background:var(--orange); color:white; border-color:var(--orange); }
+
+  /* UPLOAD */
+  .upload-zone { border:2px dashed rgba(200,184,154,0.25); border-radius:14px; padding:24px; text-align:center; cursor:pointer; transition:all 0.2s; position:relative; overflow:hidden; }
+  .upload-zone:hover { border-color:var(--orange); background:rgba(232,101,26,0.05); }
+  .upload-zone input[type=file] { position:absolute; inset:0; opacity:0; cursor:pointer; width:100%; height:100%; }
+  .upload-text { color:var(--sand); font-size:13px; }
+  .upload-text strong { color:var(--orange); }
+
+  .camera-btn { background:linear-gradient(135deg,var(--orange),var(--orange-light)); border:none; border-radius:12px; padding:16px; color:white; font-family:'DM Sans',sans-serif; font-size:15px; font-weight:600; cursor:pointer; width:100%; display:flex; align-items:center; justify-content:center; gap:10px; margin-bottom:14px; box-shadow:0 4px 20px rgba(232,101,26,0.3); }
+
+  #camera-preview-container { display:none; margin-bottom:14px; border-radius:12px; overflow:hidden; background:#000; }
+  #camera-preview { width:100%; max-height:260px; object-fit:cover; display:block; }
+  .camera-controls { display:flex; gap:8px; padding:8px 0 0; }
+
+  .media-grid { display:grid; grid-template-columns:repeat(auto-fill,minmax(120px,1fr)); gap:8px; margin-top:14px; }
+  .media-item { border-radius:10px; overflow:hidden; position:relative; aspect-ratio:1; background:rgba(255,255,255,0.05); border:1px solid rgba(200,184,154,0.1); }
+  .media-item img { width:100%; height:100%; object-fit:cover; cursor:pointer; display:block; }
+  .media-delete { position:absolute; top:4px; right:4px; background:rgba(232,69,69,0.9); border:none; border-radius:50%; width:22px; height:22px; color:white; font-size:11px; cursor:pointer; display:none; align-items:center; justify-content:center; }
+  .media-item:hover .media-delete { display:flex; }
+  .media-caption { position:absolute; bottom:0; left:0; right:0; background:linear-gradient(transparent,rgba(0,0,0,0.75)); padding:5px; font-size:9px; color:rgba(255,255,255,0.85); }
+
+  .pdf-item { display:flex; align-items:center; gap:10px; background:rgba(255,255,255,0.04); border:1px solid rgba(200,184,154,0.1); border-radius:10px; padding:12px; margin-bottom:8px; }
+  .pdf-name { font-size:13px; color:var(--cream); flex:1; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
+  .pdf-size { font-size:10px; color:var(--mid); }
+
+  /* NOTES */
+  .note-item { background:rgba(255,255,255,0.04); border:1px solid rgba(200,184,154,0.1); border-radius:10px; padding:12px; margin-bottom:8px; }
+  .note-date { font-size:10px; color:var(--mid); margin-bottom:5px; }
+  .note-text { font-size:13px; color:var(--cream); line-height:1.6; white-space:pre-wrap; }
+  .note-header { display:flex; justify-content:space-between; align-items:flex-start; gap:8px; }
+
+  /* TACHES */
+  .tache-item { display:flex; align-items:center; gap:10px; background:rgba(255,255,255,0.04); border:1px solid rgba(200,184,154,0.1); border-radius:10px; padding:12px; margin-bottom:8px; transition:all 0.2s; }
+  .tache-item.done { opacity:0.5; }
+  .tache-check { width:20px; height:20px; border-radius:50%; border:2px solid rgba(200,184,154,0.3); cursor:pointer; display:flex; align-items:center; justify-content:center; flex-shrink:0; transition:all 0.2s; }
+  .tache-check.done { background:var(--success); border-color:var(--success); }
+  .tache-text { flex:1; font-size:13px; color:var(--cream); }
+  .tache-text.done { text-decoration:line-through; color:var(--mid); }
+  .tache-progress { background:rgba(255,255,255,0.05); border-radius:4px; height:4px; margin-top:10px; overflow:hidden; }
+  .tache-progress-bar { height:100%; background:var(--success); border-radius:4px; transition:width 0.3s; }
+
+  /* MODAL */
+  .modal-overlay { display:none; position:fixed; inset:0; background:rgba(0,0,0,0.85); backdrop-filter:blur(8px); z-index:1000; align-items:center; justify-content:center; padding:20px; }
+  .modal-overlay.show { display:flex; }
+  .modal { background:var(--dark2); border:1px solid rgba(200,184,154,0.2); border-radius:20px; padding:24px; max-width:400px; width:100%; text-align:center; }
+  .modal h2 { font-family:'DM Serif Display',serif; font-size:20px; color:var(--cream); margin-bottom:6px; }
+  .modal p { color:var(--sand); font-size:13px; margin-bottom:18px; }
+  #qrcode-container { background:white; padding:12px; border-radius:10px; display:inline-block; margin-bottom:12px; }
+  .qr-link { background:rgba(255,255,255,0.05); border:1px solid rgba(200,184,154,0.15); border-radius:8px; padding:8px 10px; font-size:10px; color:var(--sand); word-break:break-all; margin-bottom:14px; text-align:left; }
+
+  /* LOADER */
+  .loader { display:none; position:fixed; inset:0; background:rgba(0,0,0,0.75); z-index:2000; align-items:center; justify-content:center; flex-direction:column; gap:14px; }
+  .loader.show { display:flex; }
+  .spinner { width:40px; height:40px; border:3px solid rgba(232,101,26,0.2); border-top-color:var(--orange); border-radius:50%; animation:spin 0.8s linear infinite; }
+  @keyframes spin { to { transform:rotate(360deg); } }
+  .loader-text { color:var(--sand); font-size:13px; }
+
+  /* TOAST */
+  .toast { position:fixed; bottom:20px; left:50%; transform:translateX(-50%) translateY(100px); background:var(--dark2); border:1px solid rgba(200,184,154,0.2); border-radius:10px; padding:10px 20px; color:var(--cream); font-size:13px; font-weight:500; z-index:3000; transition:transform 0.3s; max-width:90vw; }
+  .toast.show { transform:translateX(-50%) translateY(0); }
+  .toast.error { border-color:rgba(232,69,69,0.5); }
+  .toast.offline { border-color:rgba(232,69,69,0.5); background:#2C1414; }
+
+  /* DETAIL */
+  .detail-header { display:flex; align-items:flex-start; gap:10px; margin-bottom:20px; flex-wrap:wrap; }
+  .back-btn { background:rgba(200,184,154,0.1); border:1px solid rgba(200,184,154,0.2); border-radius:10px; padding:9px 12px; color:var(--sand); cursor:pointer; font-family:'DM Sans',sans-serif; font-size:13px; white-space:nowrap; }
+
+  .row { display:flex; gap:10px; }
+  .row .form-group { flex:1; }
+  .empty-state { text-align:center; padding:36px 20px; color:var(--mid); }
+  .empty-icon { font-size:36px; margin-bottom:10px; }
+
+  /* OFFLINE QUEUE INDICATOR */
+  .pending-badge { background:rgba(232,101,26,0.2); border:1px solid rgba(232,101,26,0.4); border-radius:6px; padding:3px 8px; font-size:11px; color:var(--orange); margin-left:6px; }
+
+  @media(max-width:600px) { .row{flex-direction:column;} .tabs{padding:10px 12px 0;} .page{padding:14px;} }
+  /* LOGIN */
+  .login-screen { position:fixed; inset:0; background:var(--dark); z-index:9999; display:flex; align-items:center; justify-content:center; padding:20px; }
+  .login-box { background:var(--dark2); border:1px solid rgba(200,184,154,0.2); border-radius:20px; padding:36px 28px; max-width:360px; width:100%; text-align:center; }
+  .login-logo { font-family:'DM Serif Display',serif; font-size:32px; color:var(--orange); margin-bottom:4px; }
+  .login-logo span { color:var(--sand); font-style:italic; }
+  .login-sub { color:var(--sand); font-size:13px; margin-bottom:28px; }
+  .login-input { width:100%; background:rgba(255,255,255,0.05); border:1px solid rgba(200,184,154,0.2); border-radius:10px; padding:14px 16px; color:var(--cream); font-family:'DM Sans',sans-serif; font-size:18px; text-align:center; outline:none; letter-spacing:4px; margin-bottom:14px; }
+  .login-input:focus { border-color:var(--orange); }
+  .login-error { color:var(--danger); font-size:13px; margin-bottom:12px; display:none; }
+  .login-error.show { display:block; }
+
 </style>
 </head>
 <body>
 
-<div class="pbtn-bar">
-  <button class="pbtn" onclick="window.print()">🖨️ Imprimer / Enregistrer en PDF</button>
-  <div class="pbtn-note">⚠️ Ce bouton fonctionne uniquement si vous ouvrez ce fichier directement dans Chrome (pas dans Claude)</div>
-</div>
 
-<div class="page">
-
-<!-- HEADER -->
-<div class="hdr">
-  <div class="logo">
-    <div class="logo-name">ELEVA</div>
-    <div class="logo-tech">TECHNIQUES SPÉCIALES DU BÂTIMENT</div>
-    <div class="logo-srv">
-      ☀️ Photovoltaïques &nbsp;·&nbsp; ⚡ Bornes recharge VE<br>
-      🔒 Motorisation portes &amp; barrières<br>
-      📷 Caméras / Vidéophonies &nbsp;·&nbsp; ❄️ Climatisations
+<div class="login-screen" id="login-screen">
+  <div class="login-box">
+    <div class="login-logo">Chantier<span>Pro</span></div>
+    <div class="login-sub">Accès professionnel sécurisé</div>
+    <div class="form-group" style="text-align:left;margin-bottom:12px;">
+      <label style="color:var(--sand);font-size:13px;margin-bottom:6px;display:block;">Utilisateur</label>
+      <select id="login-user" style="width:100%;background:rgba(255,255,255,0.05);border:1px solid rgba(200,184,154,0.2);border-radius:10px;padding:11px 14px;color:var(--cream);font-family:'DM Sans',sans-serif;font-size:14px;outline:none;">
+        <option value="ARBAN">👑 ARBAN</option>
+        <option value="JOSE">👑 JOSE</option>
+        <option value="PACO">👑 PACO</option>
+      </select>
     </div>
-    <div class="logo-crd">
-      <b>TVA BE 0717 674 690</b> &nbsp;·&nbsp; Rue des français 189, 4430 ANS<br>
-      CBC : BE 37 7320 4538 0428 &nbsp;·&nbsp; GSM : 0455106500<br>
-      eleva.belgique@gmail.com
-      <div class="logo-exp">30 ANS D'EXPÉRIENCES &nbsp;·&nbsp; PATRON AUSSI SUR CHANTIER</div>
-    </div>
-  </div>
-
-  <table class="cbox">
-    <tr><td class="lbl">Date</td><td id="v-date">—</td></tr>
-    <tr><td class="lbl">Devis N°</td><td id="v-num">—</td></tr>
-    <tr class="cname"><td colspan="2" id="v-name">NOM CLIENT</td></tr>
-    <tr><td colspan="2" id="v-adr" style="padding:2px 5px">—</td></tr>
-    <tr><td colspan="2" id="v-cp" style="padding:2px 5px">—</td></tr>
-    <tr><td colspan="2" id="v-tel" style="padding:2px 5px">—</td></tr>
-    <tr><td class="lbl">TVA</td><td id="v-tva">—</td></tr>
-  </table>
-</div>
-
-<!-- SITUATION + INSTALLATION -->
-<div class="si">
-  <table class="rt">
-    <tr><td colspan="2" class="rh">SITUATION</td></tr>
-    <tr><td class="l">Orientation</td><td class="v" id="s-or">—</td></tr>
-    <tr><td class="l">Inclinaison</td><td class="v" id="s-in">—</td></tr>
-    <tr><td class="l">Toiture</td><td class="v" id="s-to">—</td></tr>
-    <tr><td class="l">Région / GRD</td><td class="v" id="s-rg">—</td></tr>
-    <tr><td class="l">Consommation</td><td class="v" id="s-co">—</td></tr>
-  </table>
-  <table class="rt">
-    <tr><td colspan="2" class="rh">INSTALLATION</td></tr>
-    <tr><td class="l">Panneau PV</td><td class="v" id="i-pan">—</td></tr>
-    <tr><td class="l">Nombre panneaux</td><td class="v" id="i-nb">—</td></tr>
-    <tr><td class="l">Puissance totale</td><td class="v" id="i-pui">—</td></tr>
-    <tr><td class="l">Onduleur</td><td class="v" id="i-ond">—</td></tr>
-    <tr><td class="l">Batterie(s)</td><td class="v" id="i-bat">—</td></tr>
-    <tr><td class="l">Rendement</td><td class="v" id="i-rdt">—</td></tr>
-    <tr><td class="l">Production min.</td><td class="v" id="i-pro">—</td></tr>
-  </table>
-</div>
-
-<!-- OFFRE -->
-<table class="ot">
-  <tr class="omh"><td colspan="4">OFFRE EN FOURNITURE ET POSE</td></tr>
-  <tr class="och"><td style="width:22px">N°</td><td>Description</td><td class="td">Détail</td><td class="tp">Montant HTVA</td></tr>
-
-  <tr class="osh"><td colspan="4">MATÉRIEL</td></tr>
-  <tr><td class="tn" rowspan="4">1</td><td>Panneaux</td><td class="td" id="m-pan">—</td><td class="ti" rowspan="4">Inclus dans ce prix</td></tr>
-  <tr><td>Nombre / Puissance installation</td><td class="td" id="m-nb-pui">—</td></tr>
-  <tr><td>Certificat CE — IEC 61215</td><td class="td">✓</td></tr>
-  <tr><td>Garantie dégressive production ===&gt;</td><td class="td hl">25 ans</td></tr>
-
-  <tr><td class="tn" rowspan="4">2</td><td>Onduleur HYBRIDE — 10 ANS DE GARANTIE</td><td class="td" id="m-ond">—</td><td class="ti" rowspan="4" id="m-bat-px">Inclus dans ce prix</td></tr>
-  <tr><td>Nombre d'onduleurs</td><td class="td">1</td></tr>
-  <tr><td>Optimiseurs</td><td class="td" id="m-opt">—</td></tr>
-  <tr><td>BATTERIES</td><td class="td hl" id="m-bat">—</td></tr>
-
-  <tr class="osh"><td colspan="4">FOURNITURES</td></tr>
-  <tr><td class="tn">1</td><td colspan="2">Profilés, fixations, chemins de câble, câble DC/terre, boîtes de jonction, coffrets, différentiels</td><td class="ti">Inclus dans ce prix</td></tr>
-
-  <tr class="osh"><td colspan="4">MISE EN ŒUVRE — CHANTIER</td></tr>
-  <tr><td class="tn">1</td><td colspan="2">Main d'œuvre, manutention, outils, démarches administratives, organisme de contrôle</td><td class="ti">Inclus dans ce prix</td></tr>
-  <tr><td class="tn">2</td><td colspan="2">Études, dimensionnement, rentabilité, raccordement électrique</td><td class="ti">Inclus dans ce prix</td></tr>
-  <tr><td class="tn">3</td><td colspan="2">Mise en conformité de la terre</td><td class="ti" id="o-terre">Exclus dans ce prix</td></tr>
-  <tr><td class="tn">4</td><td colspan="2">Mise en conformité du différentiel</td><td class="ti" id="o-diff">Exclus dans ce prix</td></tr>
-
-  <tr class="osh"><td colspan="4">OPTIONS</td></tr>
-  <tbody id="opts-body">
-    <tr><td colspan="4" style="padding:3px 5px;font-style:italic;color:#888">Aucune option sélectionnée</td></tr>
-  </tbody>
-</table>
-
-<div class="note">Devis soumis sous réserve d'acceptation, après vérification de la charpente, couverture et installation électrique par notre technicien endéans les 7 jours après réception de votre acompte.</div>
-<div class="pay"><u><b>Paiements : À verser sur le compte BNP BE13 0019 9511 9339 un acompte de 50%, solde à la mise en service en mentionnant la référence du devis.</b></u></div>
-<div class="val">VALIDITÉ 8 JOURS</div>
-
-<!-- SIGNATURES + TOTAUX -->
-<div class="st">
-  <div class="sb">Pour la société ELEVA Srl<br>Mir J-François<div class="sl">Signature</div></div>
-  <div class="sc">Date et signature, précédée de la mention "Lu et approuvé"<br><br><b id="sig-c" style="font-size:10px">CLIENT</b><div class="sl">Signature</div></div>
-  <div class="tb">
-    <div class="tr trh"><span>Total HTVA</span><span id="t-ht">—</span></div>
-    <div class="tr"><span>REMISE</span><span id="t-rem">—</span></div>
-    <div class="tr"><span id="t-tvl">TVA 6 %</span><span id="t-tva">—</span></div>
-    <div class="tr trt"><span>Total TVAC</span><span id="t-ttc">—</span></div>
+    <input class="login-input" type="password" id="login-pwd" placeholder="••••••" maxlength="20"
+      onkeydown="if(event.key==='Enter')verifierLogin()">
+    <div class="login-error" id="login-error">❌ Mot de passe incorrect</div>
+    <button class="btn btn-primary btn-full" onclick="verifierLogin()">🔓 Connexion</button>
   </div>
 </div>
 
+<div class="loader" id="loader"><div class="spinner"></div><div class="loader-text" id="loader-text">Chargement...</div></div>
+<div class="toast" id="toast"></div>
+
+<div class="modal-overlay" id="qr-modal">
+  <div class="modal">
+    <h2>🔲 QR Code Client</h2>
+    <p id="qr-subtitle"></p>
+    <div id="qrcode-container"><div id="qrcode"></div></div>
+    <div class="qr-link" id="qr-link-text"></div>
+    <div style="display:flex;gap:8px;justify-content:center;flex-wrap:wrap;">
+      <button class="btn btn-primary btn-sm" onclick="downloadQR()">⬇ Télécharger</button>
+      <button class="btn btn-secondary btn-sm" onclick="copyLink()">📋 Copier</button>
+      <button class="btn btn-secondary btn-sm" onclick="closeQRModal()">✕ Fermer</button>
+    </div>
+  </div>
+</div>
+
+<header>
+  <div class="logo">Chantier<span>Pro</span></div>
+  <div class="header-btns">
+    <span class="offline-badge" id="offline-badge">📵 Hors ligne</span>
+    <button class="sync-btn" id="sync-btn" onclick="syncAll()">🔄 Sync</button>
+    <button class="sync-btn" onclick="deconnecter()" title="Déconnexion" style="color:var(--danger);">⏻</button>
+  </div>
+</header>
+
+<div class="tabs">
+  <button class="tab active" id="tab-chantiers" onclick="showTab('chantiers',this)">🏗 Chantiers</button>
+  <button class="tab" id="tab-nouveau" onclick="showTab('nouveau',this)">➕ Nouveau</button>
+</div>
+
+<!-- LISTE -->
+<div class="page active" id="page-chantiers">
+  <br>
+  <div class="section-title">Mes Chantiers</div>
+  <div class="section-sub" id="sync-status">Synchronisés sur tous vos appareils ☁️</div>
+  <div class="filter-bar">
+    <button class="filter-btn active" onclick="filtrer('tous',this)">Tous</button>
+    <button class="filter-btn" onclick="filtrer('encours',this)">🔨 En cours</button>
+    <button class="filter-btn" onclick="filtrer('attente',this)">⏳ En attente</button>
+    <button class="filter-btn" onclick="filtrer('pause',this)">⏸ En pause</button>
+    <button class="filter-btn" onclick="filtrer('termine',this)">✅ Terminés</button>
+  </div>
+  <div id="chantier-list" class="chantier-grid"></div>
+</div>
+
+<!-- NOUVEAU -->
+<div class="page" id="page-nouveau">
+  <br>
+  <div class="section-title">Nouveau Chantier</div>
+  <div class="section-sub">Renseignez les informations</div>
+  <div class="card">
+    <div class="card-title">Informations</div>
+    <div class="row">
+      <div class="form-group"><label>Nom du chantier *</label><input type="text" id="new-nom" placeholder="Ex: Rénovation cuisine"></div>
+      <div class="form-group"><label>Client *</label><input type="text" id="new-client" placeholder="Ex: M. Dupont"></div>
+    </div>
+    <div class="form-group">
+      <label>Adresse</label>
+      <div style="display:flex;gap:8px;">
+        <input type="text" id="new-adresse" placeholder="Ex: 12 rue des Fleurs, Lyon" style="flex:1;">
+        <button class="btn btn-secondary btn-sm" onclick="geoLocaliser()" title="Utiliser ma position">📍</button>
+      </div>
+    </div>
+    <div class="row">
+      <div class="form-group"><label>Date de début</label><input type="date" id="new-date"></div>
+      <div class="form-group"><label>Date de fin prévue</label><input type="date" id="new-date-fin"></div>
+    </div>
+    <div class="form-group">
+      <label>Statut</label>
+      <select id="new-statut">
+        <option value="encours">🔨 En cours</option>
+        <option value="attente">⏳ En attente</option>
+        <option value="pause">⏸ En pause</option>
+        <option value="termine">✅ Terminé</option>
+      </select>
+    </div>
+    <div class="form-group"><label>Description</label><textarea id="new-desc" placeholder="Détails du chantier..."></textarea></div>
+    <div class="form-group">
+      <label>🔑 Code client (pour accéder à la galerie)</label>
+      <input type="text" id="new-pwd-client" placeholder="Ex: 1234 ou nom du client" maxlength="20">
+      <div style="font-size:11px;color:var(--mid);margin-top:4px;">Le client devra entrer ce code pour voir ses photos</div>
+    </div>
+    <button class="btn btn-primary btn-full" onclick="creerChantier()">🏗 Créer le chantier</button>
+  </div>
+</div>
+
+<!-- DETAIL -->
+<div class="page" id="page-detail">
+  <br>
+  <div class="detail-header">
+    <button class="back-btn" onclick="backToList()">← Retour</button>
+    <div style="flex:1">
+      <div class="section-title" id="detail-nom" style="font-size:18px;margin-bottom:3px;"></div>
+      <div style="color:var(--sand);font-size:12px;margin-bottom:4px;" id="detail-info"></div>
+      <div id="detail-status"></div>
+    </div>
+    <button class="btn btn-primary btn-sm" onclick="genererQR()">🔲 QR</button>
+  </div>
+
+  <!-- STATUT -->
+  <div class="card">
+    <div class="card-title">📊 Statut du chantier</div>
+    <div class="row">
+      <div class="form-group">
+        <label>Statut actuel</label>
+        <select id="edit-statut" onchange="changerStatut()">
+          <option value="encours">🔨 En cours</option>
+          <option value="attente">⏳ En attente</option>
+          <option value="pause">⏸ En pause</option>
+          <option value="termine">✅ Terminé</option>
+        </select>
+      </div>
+      <div class="form-group">
+        <label>Date de fin prévue</label>
+        <input type="date" id="edit-date-fin" onchange="changerDateFin()">
+      </div>
+    </div>
+    <div id="retard-box"></div>
+  </div>
+
+  <!-- TACHES -->
+  <div class="card">
+    <div class="card-title">✅ Liste de tâches</div>
+    <div id="tache-progress-container" style="margin-bottom:12px;display:none;">
+      <div style="display:flex;justify-content:space-between;font-size:12px;color:var(--sand);margin-bottom:4px;">
+        <span>Progression</span><span id="tache-pct">0%</span>
+      </div>
+      <div class="tache-progress"><div class="tache-progress-bar" id="tache-bar"></div></div>
+    </div>
+    <div style="display:flex;gap:8px;margin-bottom:12px;">
+      <input type="text" id="tache-input" placeholder="Nouvelle tâche..." style="flex:1;" onkeydown="if(event.key==='Enter')ajouterTache()">
+      <button class="btn btn-primary btn-sm" onclick="ajouterTache()">➕</button>
+    </div>
+    <div id="tache-list"></div>
+  </div>
+
+  <!-- NOTES -->
+  <div class="card">
+    <div class="card-title">📝 Notes & Suivi</div>
+    <textarea id="note-input" placeholder="Travaux effectués, remarques, matériaux..." style="min-height:70px;margin-bottom:10px;"></textarea>
+    <button class="btn btn-primary btn-sm" onclick="ajouterNote()">➕ Ajouter la note</button>
+    <div id="notes-list" style="margin-top:14px;"></div>
+  </div>
+
+  <!-- CAMERA -->
+  <div class="card">
+    <div class="card-title">📷 Appareil photo</div>
+    <button class="camera-btn" onclick="activerCamera()">📷 Prendre une photo</button>
+    <div id="camera-preview-container">
+      <video id="camera-preview" autoplay playsinline muted></video>
+      <div class="camera-controls">
+        <button class="btn btn-primary" style="flex:1" onclick="prendrePhoto()">📸 Capturer</button>
+        <button class="btn btn-secondary" onclick="arreterCamera()">✕</button>
+      </div>
+    </div>
+    <canvas id="photo-canvas" style="display:none;"></canvas>
+  </div>
+
+  <!-- PHOTOS -->
+  <div class="card">
+    <div class="card-title">🖼 Photos</div>
+    <div class="upload-zone" id="photo-drop-zone">
+      <input type="file" id="photo-input" accept="image/*" multiple onchange="handlePhotoUpload(this.files)">
+      <div style="font-size:28px;margin-bottom:6px;">🖼️</div>
+      <div class="upload-text"><strong>Cliquez ou glissez</strong> vos photos</div>
+    </div>
+    <div id="photo-grid" class="media-grid"></div>
+  </div>
+
+  <!-- PDF -->
+  <div class="card">
+    <div class="card-title">📄 Documents PDF</div>
+    <div class="upload-zone">
+      <input type="file" id="pdf-input" accept=".pdf" multiple onchange="handlePdfUpload(this.files)">
+      <div style="font-size:28px;margin-bottom:6px;">📋</div>
+      <div class="upload-text"><strong>Cliquez ou glissez</strong> vos PDFs</div>
+    </div>
+    <div id="pdf-list" style="margin-top:14px;"></div>
+  </div>
 </div>
 
 <script>
 // ══════════════════════════════════════════════
-//  DONNÉES DU DEVIS — modifiez ici
+// CONFIG
 // ══════════════════════════════════════════════
-const D = {
-  date: "29/04/2026",
-  num:  "PV-198801",
-  client: {
-    prenom:"Jean", nom:"Dupont",
-    adresse:"Rue des Lilas 12",
-    cp:"4000", ville:"Liège",
-    tel:"+32 4 000 00 00", tva:"—",
-  },
-  sit: {
-    orientation:"SUD", inclinaison:"30°",
-    toiture:"Tuile",
-    region:"Wallonie — ORES",
-    conso:"4.500 kWh",
-  },
-  inst: {
-    panneau:"Longi Solar Hi-MO 6 (420 Wc)",
-    nbPanneaux:12,
-    puissance:"5.040 Wc (5,04 kWc)",
-    onduleur:"SolarEdge SE5K — 5 kW",
-    optimiseurs:"12 × SolarEdge P370",
-    batterie:"2 × BYD Box 5 kWh",
-    batPrix:"3.200 €/bat.",
-    rendement:"900 kWh/kWc",
-    production:"9.360 kWh/an",
-  },
-  options: [
-    // Décommentez les lignes dont vous avez besoin :
-    // { desc:"Backup partiel : Frigo, Congélateur, Alarme", prix:"700,00 €" },
-    // { desc:"Mise en conformité de la terre", prix:"400,00 €" },
-    // { desc:"Modification du coffret électrique", prix:"600,00 €" },
-  ],
-  miseATerre:  false,
-  differentiel: false,
-  tarif: { ht:14500, tva:0.06, remise:0 },
+const CLOUD       = 'dyojhn5ng';
+const PRESET      = 'chantier_unsigned';
+const JSONBIN_KEY = '$2a$10$nEXjNGx96Wh6f9zC4p145OmJ.ux/yVXbLEG5owWYJdSVNL/vI4bgO';
+const JSONBIN_URL = 'https://api.jsonbin.io/v3/b';
+const UC_KEY      = '020579f2bad5b94fa948';
+const GALLERY     = 'https://mirjfr.github.io/chantier/gallery.html';
+
+// BIN par utilisateur — PACO a le bin existant, ARBAN et JOSE auront le leur créé automatiquement
+const USER_BINS = {
+  PACO:  '69ecb458856a6821896f951b',
+  ARBAN: localStorage.getItem('bin_ARBAN') || null,
+  JOSE:  localStorage.getItem('bin_JOSE')  || null
 };
 
-const f = n => new Intl.NumberFormat("fr-BE",{minimumFractionDigits:2,maximumFractionDigits:2}).format(n)+" €";
-const $ = id => document.getElementById(id);
+function getBinId() {
+  return USER_BINS[currentUser] || null;
+}
 
-$("v-date").textContent = D.date;
-$("v-num").textContent  = D.num;
-$("v-name").textContent = (D.client.prenom+" "+D.client.nom).toUpperCase();
-$("v-adr").textContent  = D.client.adresse;
-$("v-cp").textContent   = D.client.cp+" "+D.client.ville;
-$("v-tel").textContent  = D.client.tel;
-$("v-tva").textContent  = D.client.tva;
+let chantiers = [], current = null, camStream = null;
+let isOnline = navigator.onLine;
+let pendingSync = false;
+let filtreActif = 'tous';
 
-$("s-or").textContent = D.sit.orientation;
-$("s-in").textContent = D.sit.inclinaison;
-$("s-to").textContent = D.sit.toiture;
-$("s-rg").textContent = D.sit.region;
-$("s-co").textContent = D.sit.conso;
+// ══════════════════════════════════════════════
+// ONLINE / OFFLINE
+// ══════════════════════════════════════════════
+window.addEventListener('online', () => {
+  isOnline = true;
+  document.getElementById('offline-badge').classList.remove('show');
+  if(pendingSync) { syncAll(); pendingSync = false; }
+  toast('🌐 Connexion rétablie — synchronisation...');
+});
+window.addEventListener('offline', () => {
+  isOnline = false;
+  document.getElementById('offline-badge').classList.add('show');
+  toast('📵 Mode hors ligne — les modifications seront sync plus tard', 'offline');
+});
 
-$("i-pan").textContent = D.inst.panneau;
-$("i-nb").textContent  = D.inst.nbPanneaux+" panneaux";
-$("i-pui").textContent = D.inst.puissance;
-$("i-ond").textContent = D.inst.onduleur;
-$("i-bat").textContent = D.inst.batterie||"—";
-$("i-rdt").textContent = D.inst.rendement;
-$("i-pro").textContent = D.inst.production;
+// ══════════════════════════════════════════════
+// HELPERS
+// ══════════════════════════════════════════════
+function showLoader(t='Chargement...') { document.getElementById('loader-text').textContent=t; document.getElementById('loader').classList.add('show'); }
+function hideLoader() { document.getElementById('loader').classList.remove('show'); }
+function toast(msg, type='ok') {
+  const el=document.getElementById('toast');
+  el.textContent=(type==='ok'?'✅ ':type==='offline'?'':'❌ ')+msg;
+  el.className='toast show'+(type==='err'?' error':type==='offline'?' offline':'');
+  clearTimeout(el._t); el._t=setTimeout(()=>el.classList.remove('show'),3500);
+}
+function showTab(tab,btn) {
+  document.querySelectorAll('.tab').forEach(t=>t.classList.remove('active'));
+  document.querySelectorAll('.page').forEach(p=>p.classList.remove('active'));
+  if(btn) btn.classList.add('active');
+  document.getElementById('page-'+tab).classList.add('active');
+  if(tab==='chantiers') renderChantiers();
+}
 
-$("m-pan").textContent    = D.inst.panneau;
-$("m-nb-pui").textContent = D.inst.nbPanneaux+" panneaux — "+D.inst.puissance;
-$("m-ond").textContent    = D.inst.onduleur;
-$("m-opt").textContent    = D.inst.optimiseurs||"—";
-$("m-bat").textContent    = D.inst.batterie||"—";
-$("m-bat-px").textContent = D.inst.batterie
-  ? "Inclus dans ce prix\n(valeur/bat. : "+D.inst.batPrix+")"
-  : "Inclus dans ce prix";
+// ══════════════════════════════════════════════
+// CACHE LOCAL (mode hors ligne)
+// ══════════════════════════════════════════════
+function sauvegarderCache(data) {
+  try { localStorage.setItem('cache_'+currentUser, JSON.stringify(data)); } catch(e){}
+}
+function chargerCache() {
+  try { const c=localStorage.getItem('cache_'+currentUser); return c?JSON.parse(c):[]; } catch(e){ return []; }
+}
+function sauvegarderPending(data) {
+  try { localStorage.setItem('pending_'+currentUser, JSON.stringify(data)); } catch(e){}
+}
+function chargerPending() {
+  try { const c=localStorage.getItem('pending_'+currentUser); return c?JSON.parse(c):null; } catch(e){ return null; }
+}
 
-$("o-terre").textContent = D.miseATerre   ? "Inclus dans ce prix" : "Exclus dans ce prix";
-$("o-diff").textContent  = D.differentiel ? "Inclus dans ce prix" : "Exclus dans ce prix";
+// ══════════════════════════════════════════════
+// JSONBIN
+// ══════════════════════════════════════════════
+async function lireBin() {
+  const binId = getBinId();
+  if(!binId) return []; // Nouveau utilisateur — pas encore de bin
+  const controller = new AbortController();
+  const timeout = setTimeout(()=>controller.abort(), 8000);
+  try {
+    const r = await fetch(JSONBIN_URL+'/'+binId+'/latest', {
+      headers:{'X-Master-Key':JSONBIN_KEY},
+      signal:controller.signal
+    });
+    clearTimeout(timeout);
+    const d = await r.json();
+    return d.record || [];
+  } catch(e) { clearTimeout(timeout); throw e; }
+}
 
-const ob = $("opts-body");
-ob.innerHTML = D.options.length === 0
-  ? `<tr><td colspan="4" style="padding:3px 5px;font-style:italic;color:#888">Aucune option sélectionnée</td></tr>`
-  : D.options.map((o,i) => `<tr><td class="tn">${i+1}</td><td colspan="2">${o.desc}</td><td class="tp">${o.prix}</td></tr>`).join("");
+async function creerNouveauBin(data) {
+  const r = await fetch(JSONBIN_URL, {
+    method:'POST',
+    headers:{
+      'Content-Type':'application/json',
+      'X-Master-Key':JSONBIN_KEY,
+      'X-Bin-Name':'ChantierPro_'+currentUser,
+      'X-Bin-Private':'false'
+    },
+    body:JSON.stringify(data)
+  });
+  const d = await r.json();
+  if(d.message) throw new Error(d.message);
+  const newId = d.metadata.id;
+  USER_BINS[currentUser] = newId;
+  localStorage.setItem('bin_'+currentUser, newId);
+  return newId;
+}
 
-const ttc = D.tarif.ht*(1+D.tarif.tva);
-$("t-ht").textContent  = f(D.tarif.ht);
-$("t-rem").textContent = D.tarif.remise>0 ? f(D.tarif.remise) : "—";
-$("t-tvl").textContent = "TVA "+(D.tarif.tva*100).toFixed(0)+" %";
-$("t-tva").textContent = f(D.tarif.ht*D.tarif.tva);
-$("t-ttc").textContent = f(ttc);
-$("sig-c").textContent = (D.client.prenom+" "+D.client.nom).toUpperCase();
+async function ecrireBin(data) {
+  let binId = getBinId();
+  // Si pas de bin pour cet utilisateur, on en crée un
+  if(!binId) {
+    binId = await creerNouveauBin(data);
+    return;
+  }
+  const r = await fetch(JSONBIN_URL+'/'+binId, {
+    method:'PUT',
+    headers:{'Content-Type':'application/json','X-Master-Key':JSONBIN_KEY},
+    body:JSON.stringify(data)
+  });
+  const d = await r.json();
+  if(d.message) throw new Error(d.message);
+}
+
+async function syncAll() {
+  if(!isOnline) { toast('Pas de connexion','err'); return; }
+  const btn=document.getElementById('sync-btn');
+  btn.textContent='⏳';
+  try {
+    // Upload les données en attente d'abord
+    const pending = chargerPending();
+    if(pending) { await ecrireBin(pending); localStorage.removeItem('chantiers_pending'); }
+    chantiers = await lireBin();
+    sauvegarderCache(chantiers);
+    renderChantiers();
+    document.getElementById('sync-status').textContent = currentUser+' — Synchronisé ✓ — ' + new Date().toLocaleTimeString('fr-FR');
+    toast('Synchronisé !');
+  } catch(e){ toast('Erreur sync','err'); }
+  btn.textContent='🔄 Sync';
+}
+
+async function saveAll() {
+  const i=chantiers.findIndex(c=>c.id===current.id);
+  if(i>=0) chantiers[i]=current; else chantiers.unshift(current);
+  sauvegarderCache(chantiers);
+  if(!isOnline) {
+    sauvegarderPending(chantiers);
+    pendingSync = true;
+    toast('💾 Sauvegardé localement — sync quand connexion disponible', 'offline');
+    return;
+  }
+  await ecrireBin(chantiers);
+}
+
+// ══════════════════════════════════════════════
+// GEOLOCALISATION
+// ══════════════════════════════════════════════
+function geoLocaliser() {
+  if(!navigator.geolocation) { toast('Géolocalisation non supportée','err'); return; }
+  toast('📍 Localisation en cours...');
+  navigator.geolocation.getCurrentPosition(async pos => {
+    const {latitude, longitude} = pos.coords;
+    try {
+      const r = await fetch(`https://nominatim.openstreetmap.org/reverse?lat=${latitude}&lon=${longitude}&format=json`);
+      const d = await r.json();
+      const adresse = d.display_name || `${latitude.toFixed(4)}, ${longitude.toFixed(4)}`;
+      const champ = document.getElementById('new-adresse') || document.getElementById('edit-adresse');
+      if(champ) champ.value = adresse;
+      toast('📍 Adresse trouvée !');
+    } catch(e) {
+      const champ = document.getElementById('new-adresse');
+      if(champ) champ.value = `${latitude.toFixed(5)}, ${longitude.toFixed(5)}`;
+    }
+  }, err => toast('Erreur GPS : '+err.message, 'err'));
+}
+
+// ══════════════════════════════════════════════
+// CHANTIERS
+// ══════════════════════════════════════════════
+function statutClass(s) { return s||'encours'; }
+function statutLabel(s) {
+  const m={encours:'🔨 En cours',attente:'⏳ En attente',pause:'⏸ En pause',termine:'✅ Terminé'};
+  return m[s]||'🔨 En cours';
+}
+
+async function creerChantier() {
+  const nom=document.getElementById('new-nom').value.trim();
+  const client=document.getElementById('new-client').value.trim();
+  if(!nom||!client){toast('Nom et client obligatoires','err');return;}
+  showLoader('Création...');
+  const c={
+    id:Date.now().toString(), nom, client,
+    adresse:document.getElementById('new-adresse').value.trim(),
+    date:document.getElementById('new-date').value,
+    dateFin:document.getElementById('new-date-fin').value,
+    statut:document.getElementById('new-statut').value,
+    desc:document.getElementById('new-desc').value.trim(),
+    pwdClient:document.getElementById('new-pwd-client').value.trim()||'',
+    photos:[], pdfs:[], notes:[], taches:[],
+    createdAt:new Date().toISOString()
+  };
+  try {
+    chantiers.unshift(c);
+    sauvegarderCache(chantiers);
+    if(isOnline) await ecrireBin(chantiers);
+    else { sauvegarderPending(chantiers); pendingSync=true; }
+    ['new-nom','new-client','new-adresse','new-date','new-date-fin','new-desc','new-pwd-client'].forEach(id=>document.getElementById(id).value='');
+    document.getElementById('new-statut').value='encours';
+    toast('Chantier créé !');
+    document.getElementById('tab-chantiers').click();
+  } catch(e){ toast('Erreur : '+e.message,'err'); chantiers.shift(); }
+  hideLoader();
+}
+
+function filtrer(f, btn) {
+  filtreActif = f;
+  document.querySelectorAll('.filter-btn').forEach(b=>b.classList.remove('active'));
+  if(btn) btn.classList.add('active');
+  renderChantiers();
+}
+
+function renderChantiers() {
+  const el=document.getElementById('chantier-list');
+  let liste = filtreActif==='tous' ? chantiers : chantiers.filter(c=>(c.statut||'encours')===filtreActif);
+  if(!liste.length){
+    el.innerHTML='<div class="empty-state" style="grid-column:1/-1"><div class="empty-icon">🏗️</div><p>Aucun chantier.</p></div>';
+    return;
+  }
+  el.innerHTML=liste.map(c=>{
+    const taches=c.taches||[];
+    const done=taches.filter(t=>t.done).length;
+    const retard = c.dateFin && new Date(c.dateFin)<new Date() && c.statut!=='termine';
+    return `<div class="chantier-card ${statutClass(c.statut)}" onclick="ouvrirChantier('${c.id}')">
+      <div style="display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:4px;">
+        <div class="chantier-name">${c.nom}</div>
+        <span class="status-badge status-${statutClass(c.statut)}">${statutLabel(c.statut)}</span>
+      </div>
+      <div class="chantier-client">👤 ${c.client}</div>
+      ${c.adresse?`<div class="chantier-adresse">📍 ${c.adresse}</div>`:''}
+      ${retard?`<div style="font-size:11px;color:var(--danger);margin-bottom:6px;">⚠️ En retard</div>`:''}
+      ${taches.length?`<div style="margin-bottom:8px;"><div class="tache-progress"><div class="tache-progress-bar" style="width:${Math.round(done/taches.length*100)}%"></div></div><div style="font-size:10px;color:var(--mid);margin-top:3px;">${done}/${taches.length} tâches</div></div>`:''}
+      <div class="chantier-stats">
+        <span class="stat-badge">📸 ${(c.photos||[]).length}</span>
+        <span class="stat-badge">📄 ${(c.pdfs||[]).length}</span>
+        <span class="stat-badge">📝 ${(c.notes||[]).length}</span>
+        <span class="stat-badge">✅ ${(c.taches||[]).length}</span>
+      </div>
+    </div>`;
+  }).join('');
+}
+
+function ouvrirChantier(id) {
+  current=chantiers.find(c=>c.id===id);
+  if(!current) return;
+  if(!current.notes) current.notes=[];
+  if(!current.taches) current.taches=[];
+  document.querySelectorAll('.page').forEach(p=>p.classList.remove('active'));
+  document.getElementById('page-detail').classList.add('active');
+  document.getElementById('detail-nom').textContent=current.nom;
+  document.getElementById('detail-info').textContent='👤 '+current.client+(current.adresse?' • 📍 '+current.adresse:'');
+  document.getElementById('detail-status').innerHTML=`<span class="status-badge status-${statutClass(current.statut)}">${statutLabel(current.statut)}</span>`;
+  document.getElementById('edit-statut').value=current.statut||'encours';
+  document.getElementById('edit-date-fin').value=current.dateFin||'';
+  verifierRetard();
+  renderTaches(); renderNotes(); renderPhotos(); renderPdfs();
+}
+
+function backToList() {
+  arreterCamera();
+  document.querySelectorAll('.page').forEach(p=>p.classList.remove('active'));
+  document.getElementById('page-chantiers').classList.add('active');
+  renderChantiers();
+}
+
+// ══════════════════════════════════════════════
+// STATUT
+// ══════════════════════════════════════════════
+async function changerStatut() {
+  current.statut = document.getElementById('edit-statut').value;
+  document.getElementById('detail-status').innerHTML=`<span class="status-badge status-${statutClass(current.statut)}">${statutLabel(current.statut)}</span>`;
+  showLoader('Mise à jour...');
+  await saveAll(); hideLoader();
+  toast('Statut mis à jour !');
+}
+
+async function changerDateFin() {
+  current.dateFin = document.getElementById('edit-date-fin').value;
+  verifierRetard();
+  await saveAll();
+}
+
+function verifierRetard() {
+  const box=document.getElementById('retard-box');
+  if(current.dateFin && new Date(current.dateFin)<new Date() && current.statut!=='termine') {
+    const jours=Math.floor((new Date()-new Date(current.dateFin))/(1000*60*60*24));
+    box.innerHTML=`<div style="background:rgba(232,69,69,0.1);border:1px solid rgba(232,69,69,0.3);border-radius:8px;padding:10px;font-size:13px;color:var(--danger);">⚠️ Chantier en retard de ${jours} jour(s)</div>`;
+  } else { box.innerHTML=''; }
+}
+
+// ══════════════════════════════════════════════
+// TACHES
+// ══════════════════════════════════════════════
+async function ajouterTache() {
+  const txt=document.getElementById('tache-input').value.trim();
+  if(!txt) return;
+  current.taches.push({id:Date.now().toString(), text:txt, done:false, createdAt:new Date().toISOString()});
+  document.getElementById('tache-input').value='';
+  await saveAll(); renderTaches();
+}
+
+async function toggleTache(i) {
+  current.taches[i].done = !current.taches[i].done;
+  await saveAll(); renderTaches();
+}
+
+async function deleteTache(i) {
+  current.taches.splice(i,1);
+  await saveAll(); renderTaches();
+}
+
+function renderTaches() {
+  const el=document.getElementById('tache-list');
+  const taches=current.taches||[];
+  const done=taches.filter(t=>t.done).length;
+  const pct=taches.length?Math.round(done/taches.length*100):0;
+  const pc=document.getElementById('tache-progress-container');
+  pc.style.display=taches.length?'block':'none';
+  document.getElementById('tache-pct').textContent=pct+'%';
+  document.getElementById('tache-bar').style.width=pct+'%';
+  if(!taches.length){el.innerHTML='<div class="empty-state"><div class="empty-icon">✅</div><p>Aucune tâche.</p></div>';return;}
+  el.innerHTML=taches.map((t,i)=>`
+    <div class="tache-item ${t.done?'done':''}">
+      <div class="tache-check ${t.done?'done':''}" onclick="toggleTache(${i})">${t.done?'✓':''}</div>
+      <div class="tache-text ${t.done?'done':''}">${t.text}</div>
+      <button class="btn btn-danger" style="padding:4px 8px;font-size:11px;" onclick="deleteTache(${i})">✕</button>
+    </div>`).join('');
+}
+
+// ══════════════════════════════════════════════
+// NOTES
+// ══════════════════════════════════════════════
+async function ajouterNote() {
+  const txt=document.getElementById('note-input').value.trim();
+  if(!txt){toast('Écrivez une note','err');return;}
+  current.notes.unshift({id:Date.now().toString(),text:txt,date:new Date().toISOString()});
+  document.getElementById('note-input').value='';
+  showLoader('Sauvegarde...');
+  await saveAll(); renderNotes(); hideLoader(); toast('Note ajoutée !');
+}
+
+function renderNotes() {
+  const el=document.getElementById('notes-list');
+  if(!current.notes.length){el.innerHTML='<div class="empty-state"><div class="empty-icon">📝</div><p>Aucune note.</p></div>';return;}
+  el.innerHTML=current.notes.map((n,i)=>`
+    <div class="note-item">
+      <div class="note-header">
+        <div class="note-date">📅 ${new Date(n.date).toLocaleDateString('fr-FR',{day:'2-digit',month:'long',year:'numeric',hour:'2-digit',minute:'2-digit'})}</div>
+        <button class="btn btn-danger" style="padding:3px 8px;font-size:11px;" onclick="deleteNote(${i})">✕</button>
+      </div>
+      <div class="note-text">${n.text}</div>
+    </div>`).join('');
+}
+
+async function deleteNote(i) {
+  current.notes.splice(i,1);
+  showLoader('Mise à jour...'); await saveAll(); renderNotes(); hideLoader();
+}
+
+// ══════════════════════════════════════════════
+// CLOUDINARY — photos
+// ══════════════════════════════════════════════
+async function uploadFile(file, folder, type='image') {
+  const fd=new FormData();
+  fd.append('file',file); fd.append('upload_preset',PRESET);
+  fd.append('folder','chantiers/'+current.id+'/'+folder);
+  const r=await fetch(`https://api.cloudinary.com/v1_1/${CLOUD}/${type}/upload`,{method:'POST',body:fd});
+  const d=await r.json();
+  if(d.error) throw new Error(d.error.message);
+  return d;
+}
+
+async function handlePhotoUpload(files) {
+  if(!current||!files.length) return;
+  if(!isOnline){toast('Photos nécessitent une connexion','err');return;}
+  showLoader('Envoi de '+files.length+' photo(s)...');
+  try {
+    for(const f of files){
+      const d=await uploadFile(f,'photos','image');
+      // Optimisation automatique Cloudinary
+      const optUrl = d.secure_url.replace('/image/upload/', '/image/upload/f_auto,q_auto,w_1920/');
+      current.photos.push({url:optUrl,name:f.name,uploadedAt:new Date().toISOString()});
+    }
+    await saveAll(); renderPhotos(); toast(files.length+' photo(s) envoyée(s) !');
+  } catch(e){ toast('Erreur : '+e.message,'err'); }
+  hideLoader(); document.getElementById('photo-input').value='';
+}
+
+function renderPhotos() {
+  const g=document.getElementById('photo-grid');
+  if(!current.photos||!current.photos.length){g.innerHTML='';return;}
+  g.innerHTML=current.photos.map((p,i)=>`
+    <div class="media-item">
+      <img src="${p.url}" loading="lazy" onclick="window.open('${p.url}','_blank')">
+      <button class="media-delete" onclick="deletePhoto(${i})">✕</button>
+      <div class="media-caption">${new Date(p.uploadedAt).toLocaleDateString('fr-FR')}</div>
+    </div>`).join('');
+}
+
+async function deletePhoto(i) {
+  if(!confirm('Supprimer ?')) return;
+  current.photos.splice(i,1);
+  showLoader('Mise à jour...'); await saveAll(); renderPhotos(); hideLoader();
+}
+
+// ══════════════════════════════════════════════
+// CAMERA
+// ══════════════════════════════════════════════
+async function activerCamera() {
+  try {
+    camStream=await navigator.mediaDevices.getUserMedia({video:{facingMode:{ideal:'environment'}}});
+    document.getElementById('camera-preview').srcObject=camStream;
+    document.getElementById('camera-preview-container').style.display='block';
+  } catch(e){ toast('Caméra : '+e.message,'err'); }
+}
+function arreterCamera() {
+  if(camStream){camStream.getTracks().forEach(t=>t.stop());camStream=null;}
+  document.getElementById('camera-preview-container').style.display='none';
+}
+async function prendrePhoto() {
+  const v=document.getElementById('camera-preview'),c=document.getElementById('photo-canvas');
+  c.width=v.videoWidth; c.height=v.videoHeight; c.getContext('2d').drawImage(v,0,0);
+  arreterCamera();
+  c.toBlob(async blob=>{
+    const file=new File([blob],'photo_'+Date.now()+'.jpg',{type:'image/jpeg'});
+    showLoader('Envoi...');
+    try {
+      const d=await uploadFile(file,'photos','image');
+      const optUrl2 = d.secure_url.replace('/image/upload/', '/image/upload/f_auto,q_auto,w_1920/');
+      current.photos.push({url:optUrl2,name:file.name,uploadedAt:new Date().toISOString()});
+      await saveAll(); renderPhotos(); toast('Photo envoyée !');
+    } catch(e){ toast('Erreur : '+e.message,'err'); }
+    hideLoader();
+  },'image/jpeg',0.92);
+}
+
+// ══════════════════════════════════════════════
+// PDFs — Uploadcare
+// ══════════════════════════════════════════════
+async function handlePdfUpload(files) {
+  if(!current||!files.length) return;
+  if(!isOnline){toast('PDFs nécessitent une connexion','err');return;}
+  showLoader('Envoi de '+files.length+' PDF(s)...');
+  try {
+    for(const f of files){
+      const fd=new FormData();
+      fd.append('UPLOADCARE_PUB_KEY',UC_KEY);
+      fd.append('UPLOADCARE_STORE','1');
+      fd.append('file',f);
+      const r=await fetch('https://upload.uploadcare.com/base/',{method:'POST',body:fd});
+      const d=await r.json();
+      if(d.error) throw new Error(d.error);
+      const fileUrl='https://52bw17czxv.ucarecd.net/'+d.file+'/'+encodeURIComponent(f.name);
+      const viewUrl='https://docs.google.com/viewer?url='+encodeURIComponent(fileUrl);
+      current.pdfs.push({url:fileUrl,viewUrl,name:f.name,size:f.size,uploadedAt:new Date().toISOString()});
+    }
+    await saveAll(); renderPdfs(); toast(files.length+' PDF(s) envoyé(s) !');
+  } catch(e){ toast('Erreur : '+e.message,'err'); }
+  hideLoader(); document.getElementById('pdf-input').value='';
+}
+
+function renderPdfs() {
+  const l=document.getElementById('pdf-list');
+  if(!current.pdfs||!current.pdfs.length){l.innerHTML='';return;}
+  l.innerHTML=current.pdfs.map((p,i)=>`
+    <div class="pdf-item">
+      <span style="font-size:22px;">📋</span>
+      <div style="flex:1;min-width:0;">
+        <div class="pdf-name">${p.name}</div>
+        <div class="pdf-size">${p.size?(p.size/1024).toFixed(0)+' Ko':''}</div>
+      </div>
+      <a href="${p.viewUrl||p.url}" target="_blank" class="btn btn-secondary btn-sm">👁 Voir</a>
+      <a href="${p.url}" target="_blank" class="btn btn-secondary btn-sm">⬇</a>
+      <button class="btn btn-danger" onclick="deletePdf(${i})">✕</button>
+    </div>`).join('');
+}
+
+async function deletePdf(i) {
+  if(!confirm('Supprimer ?')) return;
+  current.pdfs.splice(i,1);
+  showLoader('Mise à jour...'); await saveAll(); renderPdfs(); hideLoader();
+}
+
+// ══════════════════════════════════════════════
+// QR CODE
+// ══════════════════════════════════════════════
+function genererQR() {
+  if(!current) return;
+  const url=GALLERY+'?bin='+getBinId()+'#'+current.id;
+  document.getElementById('qr-link-text').textContent=url;
+  document.getElementById('qr-subtitle').textContent=current.nom+' — '+current.client;
+  document.getElementById('qrcode').innerHTML='';
+  new QRCode(document.getElementById('qrcode'),{text:url,width:180,height:180,colorDark:'#1A1814',colorLight:'#FFFFFF',correctLevel:QRCode.CorrectLevel.M});
+  document.getElementById('qr-modal').classList.add('show');
+}
+function closeQRModal(){ document.getElementById('qr-modal').classList.remove('show'); }
+function downloadQR(){
+  const c=document.querySelector('#qrcode canvas');
+  if(!c) return;
+  const a=document.createElement('a'); a.download='QR_'+current.nom+'.png'; a.href=c.toDataURL(); a.click();
+}
+function copyLink(){
+  navigator.clipboard.writeText(document.getElementById('qr-link-text').textContent)
+    .then(()=>toast('Lien copié !')).catch(()=>toast('Erreur','err'));
+}
+
+// ── DRAG & DROP ──
+const dz=document.getElementById('photo-drop-zone');
+dz.addEventListener('dragover',e=>{e.preventDefault();dz.style.borderColor='var(--orange)';});
+dz.addEventListener('dragleave',()=>dz.style.borderColor='');
+dz.addEventListener('drop',e=>{e.preventDefault();dz.style.borderColor='';handlePhotoUpload(e.dataTransfer.files);});
+
+
+// ══════════════════════════════════════════════
+// LOGIN MULTI-UTILISATEURS
+// ══════════════════════════════════════════════
+// Mots de passe par défaut — modifiables par chaque utilisateur
+const DEFAULT_PWDS = { ARBAN:'azerty', JOSE:'azerty', PACO:'azerty' };
+let currentUser = null;
+
+function getPwd(user) {
+  return localStorage.getItem('pwd_'+user) || DEFAULT_PWDS[user] || 'azerty';
+}
+
+function verifierLogin() {
+  const user = document.getElementById('login-user').value;
+  const pwd  = document.getElementById('login-pwd').value;
+  if(pwd === getPwd(user)) {
+    currentUser = user;
+    chantiers = []; // Reset pour charger les données du bon utilisateur
+    document.getElementById('login-screen').style.display = 'none';
+    localStorage.setItem('session_user', user);
+    localStorage.setItem('session_ok', Date.now());
+    // Affiche le nom de l utilisateur connecté
+    document.querySelector('.logo').innerHTML = 'Chantier<span>Pro</span> <span style="font-size:13px;color:var(--sand);font-style:normal;">— '+user+'</span>';
+    afficherBtnChangerPwd();
+    // Charge les données de cet utilisateur
+    const cache = chargerCache();
+    if(cache.length){ chantiers=cache; renderChantiers(); }
+    syncAll();
+  } else {
+    document.getElementById('login-error').classList.add('show');
+    document.getElementById('login-pwd').value = '';
+    setTimeout(()=>document.getElementById('login-error').classList.remove('show'), 2000);
+  }
+}
+
+function checkSession() {
+  const session = localStorage.getItem('session_ok');
+  const user    = localStorage.getItem('session_user');
+  // Session valide 12h
+  if(session && user && (Date.now()-parseInt(session)) < 12*60*60*1000) {
+    currentUser = user;
+    document.getElementById('login-screen').style.display = 'none';
+    document.querySelector('.logo').innerHTML = 'Chantier<span>Pro</span> <span style="font-size:13px;color:var(--sand);font-style:normal;">— '+user+'</span>';
+    afficherBtnChangerPwd();
+    return true;
+  }
+  return false;
+}
+
+function afficherBtnChangerPwd() {
+  if(document.getElementById('change-pwd-btn')) return;
+  const btn = document.createElement('button');
+  btn.id = 'change-pwd-btn';
+  btn.className = 'sync-btn';
+  btn.textContent = '🔑';
+  btn.title = 'Changer mon mot de passe';
+  btn.onclick = afficherChangerPwd;
+  document.querySelector('.header-btns').prepend(btn);
+}
+
+function afficherChangerPwd() {
+  const nouveau = prompt('Nouveau mot de passe pour '+currentUser+' :');
+  if(!nouveau) return;
+  if(nouveau.length < 4) { alert('Minimum 4 caractères'); return; }
+  const confirm = prompt('Confirmez le mot de passe :');
+  if(nouveau !== confirm) { alert('Les mots de passe ne correspondent pas'); return; }
+  localStorage.setItem('pwd_'+currentUser, nouveau);
+  toast('✅ Mot de passe changé !');
+}
+
+function deconnecter() {
+  localStorage.removeItem('session_ok');
+  localStorage.removeItem('session_user');
+  location.reload();
+}
+
+// ══════════════════════════════════════════════
+// INIT
+// ══════════════════════════════════════════════
+(async()=>{
+  // Vérifie session
+  checkSession();
+  // Affiche cache immédiatement
+  const cache=chargerCache();
+  if(cache.length){ chantiers=cache; renderChantiers(); }
+
+  // Détecte offline
+  if(!isOnline){ document.getElementById('offline-badge').classList.add('show'); hideLoader(); return; }
+
+  // Sync en arrière-plan
+  showLoader('Chargement...');
+  try {
+    const pending=chargerPending();
+    if(pending){ await ecrireBin(pending); localStorage.removeItem('chantiers_pending'); }
+    const fresh=await lireBin();
+    if(JSON.stringify(fresh)!==JSON.stringify(chantiers)){ chantiers=fresh; sauvegarderCache(fresh); renderChantiers(); }
+  } catch(e){}
+  hideLoader();
+})();
 </script>
 </body>
 </html>
