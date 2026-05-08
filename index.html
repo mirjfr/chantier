@@ -805,17 +805,21 @@ function toggleVoiceNote() {
   recognition.lang = 'fr-FR';
   recognition.continuous = true;
   recognition.interimResults = true;
-  let finalText = input.value;
+  // Texte de base avant dictée
+  const texteBase = input.value ? input.value + (input.value.endsWith(' ')?'':' ') : '';
   recognition.onresult = (event) => {
+    let final = '';
     let interim = '';
-    for(let i=event.resultIndex; i<event.results.length; i++) {
+    // Parcourt TOUS les résultats depuis le début pour éviter les doublons
+    for(let i=0; i<event.results.length; i++) {
+      const transcript = event.results[i][0].transcript;
       if(event.results[i].isFinal) {
-        finalText += event.results[i][0].transcript + ' ';
+        final += transcript + ' ';
       } else {
-        interim += event.results[i][0].transcript;
+        interim += transcript;
       }
     }
-    input.value = finalText + interim;
+    input.value = texteBase + final + interim;
   };
   recognition.onend = () => {
     isListening = false;
