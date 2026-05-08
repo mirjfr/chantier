@@ -1,4 +1,4 @@
-<!DOCTYPE html>
+ <!DOCTYPE html>
 <html lang="fr">
 <head>
 <meta charset="UTF-8">
@@ -89,6 +89,8 @@
   .media-grid { display:grid; grid-template-columns:repeat(auto-fill,minmax(120px,1fr)); gap:8px; margin-top:14px; }
   .media-item { border-radius:10px; overflow:hidden; position:relative; aspect-ratio:1; background:rgba(255,255,255,0.05); border:1px solid rgba(200,184,154,0.1); }
   .media-item img { width:100%; height:100%; object-fit:cover; cursor:pointer; display:block; }
+  .media-item.pending { opacity:0.6; }
+  .media-item.pending::after { content:'📤'; position:absolute; top:50%; left:50%; transform:translate(-50%,-50%); font-size:24px; }
   .media-delete { position:absolute; top:4px; right:4px; background:rgba(232,69,69,0.9); border:none; border-radius:50%; width:22px; height:22px; color:white; font-size:11px; cursor:pointer; display:none; align-items:center; justify-content:center; }
   .media-item:hover .media-delete { display:flex; }
   .media-caption { position:absolute; bottom:0; left:0; right:0; background:linear-gradient(transparent,rgba(0,0,0,0.75)); padding:5px; font-size:9px; color:rgba(255,255,255,0.85); }
@@ -186,6 +188,30 @@
 <div class="loader" id="loader"><div class="spinner"></div><div class="loader-text" id="loader-text">Chargement...</div></div>
 <div class="toast" id="toast"></div>
 
+<!-- MODAL MODIFIER CHANTIER -->
+<div class="modal-overlay" id="edit-modal">
+  <div class="modal" style="max-width:480px;text-align:left;">
+    <h2 style="text-align:center;">✏️ Modifier le chantier</h2>
+    <div class="form-group"><label>Nom du chantier</label><input type="text" id="edit-nom"></div>
+    <div class="form-group"><label>Client</label><input type="text" id="edit-client"></div>
+    <div class="form-group"><label>📞 Téléphone</label><input type="tel" id="edit-tel" placeholder="06 12 34 56 78"></div>
+    <div class="form-group">
+      <label>Adresse</label>
+      <div style="display:flex;gap:8px;">
+        <input type="text" id="edit-adresse" style="flex:1;">
+        <button class="btn btn-secondary btn-sm" onclick="geoLocaliserEdit()">📍</button>
+      </div>
+    </div>
+    <div class="form-group"><label>Description</label><textarea id="edit-desc"></textarea></div>
+    <div class="form-group"><label>🔑 Code client</label><input type="text" id="edit-pwd-client" placeholder="Code pour la galerie"></div>
+    <div style="display:flex;gap:8px;justify-content:center;margin-top:20px;flex-wrap:wrap;">
+      <button class="btn btn-primary" onclick="sauverModifications()">💾 Enregistrer</button>
+      <button class="btn btn-secondary" onclick="closeEditModal()">✕ Annuler</button>
+      <button class="btn btn-danger" onclick="supprimerChantier()">🗑️ Supprimer</button>
+    </div>
+  </div>
+</div>
+
 <div class="modal-overlay" id="qr-modal">
   <div class="modal">
     <h2>🔲 QR Code Client</h2>
@@ -219,6 +245,11 @@
   <br>
   <div class="section-title">Mes Chantiers</div>
   <div class="section-sub" id="sync-status">Synchronisés sur tous vos appareils ☁️</div>
+  <div style="margin-bottom:14px;">
+    <input type="text" id="search-input" placeholder="🔍 Rechercher un chantier..." 
+      style="width:100%;background:rgba(255,255,255,0.05);border:1px solid rgba(200,184,154,0.2);border-radius:10px;padding:11px 14px;color:var(--cream);font-family:'DM Sans',sans-serif;font-size:14px;outline:none;"
+      oninput="renderChantiers()">
+  </div>
   <div class="filter-bar">
     <button class="filter-btn active" onclick="filtrer('tous',this)">Tous</button>
     <button class="filter-btn" onclick="filtrer('encours',this)">🔨 En cours</button>
@@ -239,6 +270,10 @@
     <div class="row">
       <div class="form-group"><label>Nom du chantier *</label><input type="text" id="new-nom" placeholder="Ex: Rénovation cuisine"></div>
       <div class="form-group"><label>Client *</label><input type="text" id="new-client" placeholder="Ex: M. Dupont"></div>
+    </div>
+    <div class="form-group">
+      <label>📞 Téléphone client</label>
+      <input type="tel" id="new-tel" placeholder="Ex: 06 12 34 56 78">
     </div>
     <div class="form-group">
       <label>Adresse</label>
@@ -280,8 +315,11 @@
       <div style="color:var(--sand);font-size:12px;margin-bottom:4px;" id="detail-info"></div>
       <div id="detail-status"></div>
     </div>
+    <button class="btn btn-secondary btn-sm" onclick="modifierChantier()">✏️ Modifier</button>
     <button class="btn btn-primary btn-sm" onclick="genererQR()">🔲 QR</button>
   </div>
+  <!-- Actions rapides -->
+  <div id="actions-rapides" style="display:flex;gap:8px;margin-bottom:16px;flex-wrap:wrap;"></div>
 
   <!-- STATUT -->
   <div class="card">
@@ -324,7 +362,10 @@
   <div class="card">
     <div class="card-title">📝 Notes & Suivi</div>
     <textarea id="note-input" placeholder="Travaux effectués, remarques, matériaux..." style="min-height:70px;margin-bottom:10px;"></textarea>
-    <button class="btn btn-primary btn-sm" onclick="ajouterNote()">➕ Ajouter la note</button>
+    <div style="display:flex;gap:8px;flex-wrap:wrap;">
+      <button class="btn btn-primary btn-sm" onclick="ajouterNote()">➕ Ajouter la note</button>
+      <button class="btn btn-secondary btn-sm" id="voice-btn" onclick="toggleVoiceNote()">🎤 Dicter</button>
+    </div>
     <div id="notes-list" style="margin-top:14px;"></div>
   </div>
 
@@ -569,6 +610,7 @@ async function creerChantier() {
     dateFin:document.getElementById('new-date-fin').value,
     statut:document.getElementById('new-statut').value,
     desc:document.getElementById('new-desc').value.trim(),
+    tel:document.getElementById('new-tel').value.trim(),
     pwdClient:document.getElementById('new-pwd-client').value.trim()||'',
     photos:[], pdfs:[], notes:[], taches:[],
     createdAt:new Date().toISOString()
@@ -578,7 +620,7 @@ async function creerChantier() {
     sauvegarderCache(chantiers);
     if(isOnline) await ecrireBin(chantiers);
     else { sauvegarderPending(chantiers); pendingSync=true; }
-    ['new-nom','new-client','new-adresse','new-date','new-date-fin','new-desc','new-pwd-client'].forEach(id=>document.getElementById(id).value='');
+    ['new-nom','new-client','new-tel','new-adresse','new-date','new-date-fin','new-desc','new-pwd-client'].forEach(id=>document.getElementById(id).value='');
     document.getElementById('new-statut').value='encours';
     toast('Chantier créé !');
     document.getElementById('tab-chantiers').click();
@@ -595,7 +637,15 @@ function filtrer(f, btn) {
 
 function renderChantiers() {
   const el=document.getElementById('chantier-list');
+  const search = (document.getElementById('search-input')?.value || '').toLowerCase().trim();
   let liste = filtreActif==='tous' ? chantiers : chantiers.filter(c=>(c.statut||'encours')===filtreActif);
+  if(search) {
+    liste = liste.filter(c=>
+      c.nom.toLowerCase().includes(search) ||
+      c.client.toLowerCase().includes(search) ||
+      (c.adresse||'').toLowerCase().includes(search)
+    );
+  }
   if(!liste.length){
     el.innerHTML='<div class="empty-state" style="grid-column:1/-1"><div class="empty-icon">🏗️</div><p>Aucun chantier.</p></div>';
     return;
@@ -633,6 +683,16 @@ function ouvrirChantier(id) {
   document.getElementById('detail-nom').textContent=current.nom;
   document.getElementById('detail-info').textContent='👤 '+current.client+(current.adresse?' • 📍 '+current.adresse:'');
   document.getElementById('detail-status').innerHTML=`<span class="status-badge status-${statutClass(current.statut)}">${statutLabel(current.statut)}</span>`;
+  // Actions rapides
+  const actions = document.getElementById('actions-rapides');
+  let html = '';
+  if(current.tel) {
+    html += `<a href="tel:${current.tel.replace(/\s/g,'')}" class="btn btn-secondary btn-sm">📞 Appeler ${current.tel}</a>`;
+  }
+  if(current.adresse) {
+    html += `<a href="https://www.google.com/maps/dir/?api=1&destination=${encodeURIComponent(current.adresse)}" target="_blank" class="btn btn-secondary btn-sm">🗺️ Itinéraire</a>`;
+  }
+  actions.innerHTML = html;
   document.getElementById('edit-statut').value=current.statut||'encours';
   document.getElementById('edit-date-fin').value=current.dateFin||'';
   verifierRetard();
@@ -652,6 +712,16 @@ function backToList() {
 async function changerStatut() {
   current.statut = document.getElementById('edit-statut').value;
   document.getElementById('detail-status').innerHTML=`<span class="status-badge status-${statutClass(current.statut)}">${statutLabel(current.statut)}</span>`;
+  // Actions rapides
+  const actions = document.getElementById('actions-rapides');
+  let html = '';
+  if(current.tel) {
+    html += `<a href="tel:${current.tel.replace(/\s/g,'')}" class="btn btn-secondary btn-sm">📞 Appeler ${current.tel}</a>`;
+  }
+  if(current.adresse) {
+    html += `<a href="https://www.google.com/maps/dir/?api=1&destination=${encodeURIComponent(current.adresse)}" target="_blank" class="btn btn-secondary btn-sm">🗺️ Itinéraire</a>`;
+  }
+  actions.innerHTML = html;
   showLoader('Mise à jour...');
   await saveAll(); hideLoader();
   toast('Statut mis à jour !');
@@ -711,6 +781,61 @@ function renderTaches() {
 }
 
 // ══════════════════════════════════════════════
+// NOTES VOCALES
+// ══════════════════════════════════════════════
+let recognition = null;
+let isListening = false;
+
+function toggleVoiceNote() {
+  const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
+  if(!SpeechRecognition) {
+    toast('Reconnaissance vocale non supportée sur ce navigateur','err');
+    return;
+  }
+  const btn = document.getElementById('voice-btn');
+  const input = document.getElementById('note-input');
+  if(isListening) {
+    if(recognition) recognition.stop();
+    isListening = false;
+    btn.textContent = '🎤 Dicter';
+    btn.style.background = '';
+    return;
+  }
+  recognition = new SpeechRecognition();
+  recognition.lang = 'fr-FR';
+  recognition.continuous = true;
+  recognition.interimResults = true;
+  let finalText = input.value;
+  recognition.onresult = (event) => {
+    let interim = '';
+    for(let i=event.resultIndex; i<event.results.length; i++) {
+      if(event.results[i].isFinal) {
+        finalText += event.results[i][0].transcript + ' ';
+      } else {
+        interim += event.results[i][0].transcript;
+      }
+    }
+    input.value = finalText + interim;
+  };
+  recognition.onend = () => {
+    isListening = false;
+    btn.textContent = '🎤 Dicter';
+    btn.style.background = '';
+  };
+  recognition.onerror = (e) => {
+    toast('Erreur micro: '+e.error,'err');
+    isListening = false;
+    btn.textContent = '🎤 Dicter';
+    btn.style.background = '';
+  };
+  recognition.start();
+  isListening = true;
+  btn.textContent = '⏹ Arrêter';
+  btn.style.background = '#E84545';
+  toast('🎤 Parlez maintenant...');
+}
+
+// ══════════════════════════════════════════════
 // NOTES
 // ══════════════════════════════════════════════
 async function ajouterNote() {
@@ -753,29 +878,57 @@ async function uploadFile(file, folder, type='image') {
   return d;
 }
 
+// Compresse une image avant upload
+function compresserImage(file, maxWidth, qualite) {
+  return new Promise(resolve=>{
+    const img = new Image();
+    const url = URL.createObjectURL(file);
+    img.onload = ()=>{
+      const ratio = Math.min(1, maxWidth/img.width);
+      const canvas = document.createElement('canvas');
+      canvas.width = img.width*ratio;
+      canvas.height = img.height*ratio;
+      canvas.getContext('2d').drawImage(img,0,0,canvas.width,canvas.height);
+      URL.revokeObjectURL(url);
+      canvas.toBlob(blob=>resolve(new File([blob],file.name,{type:'image/jpeg'})),'image/jpeg',qualite);
+    };
+    img.src = url;
+  });
+}
+
 async function handlePhotoUpload(files) {
   if(!current||!files.length) return;
   if(!isOnline){toast('Photos nécessitent une connexion','err');return;}
-  showLoader('Envoi de '+files.length+' photo(s)...');
+  // Affiche les apercus locaux immédiatement — pas d attente
+  for(const f of files){
+    const localUrl = URL.createObjectURL(f);
+    current.photos.push({url:localUrl,name:f.name,uploadedAt:new Date().toISOString(),pending:true});
+  }
+  renderPhotos();
+  toast('📤 Envoi en cours...');
   try {
     for(const f of files){
-      const d=await uploadFile(f,'photos','image');
-      // Optimisation automatique Cloudinary
+      const compressed = await compresserImage(f, 1280, 0.78);
+      const d = await uploadFile(compressed,'photos','image');
       const optUrl = d.secure_url.replace('/image/upload/', '/image/upload/f_auto,q_auto,w_1920/');
-      current.photos.push({url:optUrl,name:f.name,uploadedAt:new Date().toISOString()});
+      const idx = current.photos.findIndex(p=>p.pending&&p.name===f.name);
+      if(idx>=0) current.photos[idx]={url:optUrl,name:f.name,uploadedAt:new Date().toISOString()};
     }
     await saveAll(); renderPhotos(); toast(files.length+' photo(s) envoyée(s) !');
-  } catch(e){ toast('Erreur : '+e.message,'err'); }
-  hideLoader(); document.getElementById('photo-input').value='';
+  } catch(e){
+    current.photos = current.photos.filter(p=>!p.pending);
+    renderPhotos(); toast('Erreur : '+e.message,'err');
+  }
+  document.getElementById('photo-input').value='';
 }
 
 function renderPhotos() {
   const g=document.getElementById('photo-grid');
   if(!current.photos||!current.photos.length){g.innerHTML='';return;}
   g.innerHTML=current.photos.map((p,i)=>`
-    <div class="media-item">
-      <img src="${p.url}" loading="lazy" onclick="window.open('${p.url}','_blank')">
-      <button class="media-delete" onclick="deletePhoto(${i})">✕</button>
+    <div class="media-item${p.pending?' pending':''}">
+      <img src="${p.url}" loading="lazy" onclick="${p.pending?'':("window.open('"+p.url+"','_blank')")}">
+      ${p.pending?'<div style="position:absolute;inset:0;display:flex;align-items:center;justify-content:center;font-size:22px;background:rgba(0,0,0,0.3);">📤</div>':'<button class="media-delete" onclick="deletePhoto('+i+')">✕</button>'}
       <div class="media-caption">${new Date(p.uploadedAt).toLocaleDateString('fr-FR')}</div>
     </div>`).join('');
 }
@@ -802,19 +955,34 @@ function arreterCamera() {
 }
 async function prendrePhoto() {
   const v=document.getElementById('camera-preview'),c=document.getElementById('photo-canvas');
-  c.width=v.videoWidth; c.height=v.videoHeight; c.getContext('2d').drawImage(v,0,0);
+  // Reduit la resolution max a 1280px pour accelerer l upload
+  const maxW = 1280;
+  const ratio = Math.min(1, maxW/v.videoWidth);
+  c.width=v.videoWidth*ratio; c.height=v.videoHeight*ratio;
+  c.getContext('2d').drawImage(v,0,0,c.width,c.height);
   arreterCamera();
   c.toBlob(async blob=>{
     const file=new File([blob],'photo_'+Date.now()+'.jpg',{type:'image/jpeg'});
-    showLoader('Envoi...');
+    // Affiche la photo immediatement (apercu local)
+    const localUrl = URL.createObjectURL(blob);
+    current.photos.unshift({url:localUrl,name:file.name,uploadedAt:new Date().toISOString(),pending:true});
+    renderPhotos();
+    toast('📤 Envoi en cours...');
     try {
       const d=await uploadFile(file,'photos','image');
-      const optUrl2 = d.secure_url.replace('/image/upload/', '/image/upload/f_auto,q_auto,w_1920/');
-      current.photos.push({url:optUrl2,name:file.name,uploadedAt:new Date().toISOString()});
+      const optUrl = d.secure_url.replace('/image/upload/', '/image/upload/f_auto,q_auto,w_1920/');
+      // Remplace l apercu local par l URL cloud
+      const idx = current.photos.findIndex(p=>p.pending&&p.name===file.name);
+      if(idx>=0) current.photos[idx] = {url:optUrl,name:file.name,uploadedAt:new Date().toISOString()};
+      URL.revokeObjectURL(localUrl);
       await saveAll(); renderPhotos(); toast('Photo envoyée !');
-    } catch(e){ toast('Erreur : '+e.message,'err'); }
-    hideLoader();
-  },'image/jpeg',0.92);
+    } catch(e){ 
+      // En cas d erreur, supprime l apercu
+      current.photos = current.photos.filter(p=>!p.pending);
+      renderPhotos();
+      toast('Erreur : '+e.message,'err'); 
+    }
+  },'image/jpeg',0.80);
 }
 
 // ══════════════════════════════════════════════
@@ -862,6 +1030,71 @@ async function deletePdf(i) {
   if(!confirm('Supprimer ?')) return;
   current.pdfs.splice(i,1);
   showLoader('Mise à jour...'); await saveAll(); renderPdfs(); hideLoader();
+}
+
+// ══════════════════════════════════════════════
+// MODIFIER CHANTIER
+// ══════════════════════════════════════════════
+function modifierChantier() {
+  if(!current) return;
+  document.getElementById('edit-nom').value = current.nom||'';
+  document.getElementById('edit-client').value = current.client||'';
+  document.getElementById('edit-tel').value = current.tel||'';
+  document.getElementById('edit-adresse').value = current.adresse||'';
+  document.getElementById('edit-desc').value = current.desc||'';
+  document.getElementById('edit-pwd-client').value = current.pwdClient||'';
+  document.getElementById('edit-modal').classList.add('show');
+}
+
+function closeEditModal() {
+  document.getElementById('edit-modal').classList.remove('show');
+}
+
+function geoLocaliserEdit() {
+  if(!navigator.geolocation) { toast('GPS non supporté','err'); return; }
+  toast('📍 Localisation...');
+  navigator.geolocation.getCurrentPosition(async pos=>{
+    const {latitude,longitude} = pos.coords;
+    try {
+      const r = await fetch(`https://nominatim.openstreetmap.org/reverse?lat=${latitude}&lon=${longitude}&format=json`);
+      const d = await r.json();
+      document.getElementById('edit-adresse').value = d.display_name || `${latitude.toFixed(4)}, ${longitude.toFixed(4)}`;
+      toast('📍 Adresse trouvée !');
+    } catch(e){ document.getElementById('edit-adresse').value = `${latitude.toFixed(5)}, ${longitude.toFixed(5)}`; }
+  }, err=>toast('Erreur GPS','err'));
+}
+
+async function sauverModifications() {
+  const nom = document.getElementById('edit-nom').value.trim();
+  const client = document.getElementById('edit-client').value.trim();
+  if(!nom||!client){ toast('Nom et client obligatoires','err'); return; }
+  current.nom = nom;
+  current.client = client;
+  current.tel = document.getElementById('edit-tel').value.trim();
+  current.adresse = document.getElementById('edit-adresse').value.trim();
+  current.desc = document.getElementById('edit-desc').value.trim();
+  current.pwdClient = document.getElementById('edit-pwd-client').value.trim();
+  showLoader('Sauvegarde...');
+  await saveAll();
+  hideLoader();
+  closeEditModal();
+  // Rafraichit l'affichage
+  ouvrirChantier(current.id);
+  toast('Modifications enregistrées !');
+}
+
+async function supprimerChantier() {
+  if(!confirm('⚠️ Supprimer définitivement ce chantier ?\nCette action est irréversible.')) return;
+  if(!confirm('Confirmer la suppression de "'+current.nom+'" ?')) return;
+  chantiers = chantiers.filter(c=>c.id!==current.id);
+  showLoader('Suppression...');
+  sauvegarderCache(chantiers);
+  if(isOnline) await ecrireBin(chantiers);
+  else { sauvegarderPending(chantiers); pendingSync=true; }
+  hideLoader();
+  closeEditModal();
+  backToList();
+  toast('Chantier supprimé');
 }
 
 // ══════════════════════════════════════════════
