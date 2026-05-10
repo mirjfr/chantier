@@ -803,29 +803,43 @@ function toggleVoiceNote() {
   }
   recognition = new SpeechRecognition();
   recognition.lang = 'fr-FR';
-  recognition.continuous = true;
-  recognition.interimResults = true;
-  // Texte de base avant dictée
-  const texteBase = input.value ? input.value + (input.value.endsWith(' ')?'':' ') : '';
+  recognition.continuous = false; // Mode simple — un résultat à la fois
+  recognition.interimResults = false;
+  recognition.maxAlternatives = 1;
+  let dernierIndex = -1;
   recognition.onresult = (event) => {
-    let final = '';
-    let interim = '';
-    // Parcourt TOUS les résultats depuis le début pour éviter les doublons
-    for(let i=0; i<event.results.length; i++) {
-      const transcript = event.results[i][0].transcript;
+    // Ne traite QUE les nouveaux résultats jamais vus
+    for(let i = dernierIndex + 1; i < event.results.length; i++) {
       if(event.results[i].isFinal) {
-        final += transcript + ' ';
-      } else {
-        interim += transcript;
+        const texte = event.results[i][0].transcript.trim();
+        if(texte) {
+          const actuel = input.value;
+          input.value = actuel ? actuel + (actuel.endsWith(' ')?'':' ') + texte : texte;
+        }
+        dernierIndex = i;
       }
     }
-    input.value = texteBase + final + interim;
+  };
+  // Redémarre automatiquement après chaque résultat (mode continu manuel)
+  const onEndOriginal = () => {
+    if(isListening) {
+      try { recognition.start(); } catch(e){}
+    }
   };
   recognition.onend = () => {
-    isListening = false;
-    btn.textContent = '🎤 Dicter';
-    btn.style.background = '';
+    if(isListening) {
+      // Relance pour continuer à écouter
+      try { recognition.start(); } catch(e){
+        isListening = false;
+        btn.textContent = '🎤 Dicter';
+        btn.style.background = '';
+      }
+    } else {
+      btn.textContent = '🎤 Dicter';
+      btn.style.background = '';
+    }
   };
+
   recognition.onerror = (e) => {
     toast('Erreur micro: '+e.error,'err');
     isListening = false;
