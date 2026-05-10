@@ -362,10 +362,7 @@
   <div class="card">
     <div class="card-title">📝 Notes & Suivi</div>
     <textarea id="note-input" placeholder="Travaux effectués, remarques, matériaux..." style="min-height:70px;margin-bottom:10px;"></textarea>
-    <div style="display:flex;gap:8px;flex-wrap:wrap;">
-      <button class="btn btn-primary btn-sm" onclick="ajouterNote()">➕ Ajouter la note</button>
-      <button class="btn btn-secondary btn-sm" id="voice-btn" onclick="toggleVoiceNote()">🎤 Dicter</button>
-    </div>
+    <button class="btn btn-primary btn-sm" onclick="ajouterNote()">➕ Ajouter la note</button>
     <div id="notes-list" style="margin-top:14px;"></div>
   </div>
 
@@ -778,79 +775,6 @@ function renderTaches() {
       <div class="tache-text ${t.done?'done':''}">${t.text}</div>
       <button class="btn btn-danger" style="padding:4px 8px;font-size:11px;" onclick="deleteTache(${i})">✕</button>
     </div>`).join('');
-}
-
-// ══════════════════════════════════════════════
-// NOTES VOCALES
-// ══════════════════════════════════════════════
-let recognition = null;
-let isListening = false;
-
-function toggleVoiceNote() {
-  const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
-  if(!SpeechRecognition) {
-    toast('Reconnaissance vocale non supportée sur ce navigateur','err');
-    return;
-  }
-  const btn = document.getElementById('voice-btn');
-  const input = document.getElementById('note-input');
-  if(isListening) {
-    if(recognition) recognition.stop();
-    isListening = false;
-    btn.textContent = '🎤 Dicter';
-    btn.style.background = '';
-    return;
-  }
-  recognition = new SpeechRecognition();
-  recognition.lang = 'fr-FR';
-  recognition.continuous = false; // Mode simple — un résultat à la fois
-  recognition.interimResults = false;
-  recognition.maxAlternatives = 1;
-  let dernierIndex = -1;
-  recognition.onresult = (event) => {
-    // Ne traite QUE les nouveaux résultats jamais vus
-    for(let i = dernierIndex + 1; i < event.results.length; i++) {
-      if(event.results[i].isFinal) {
-        const texte = event.results[i][0].transcript.trim();
-        if(texte) {
-          const actuel = input.value;
-          input.value = actuel ? actuel + (actuel.endsWith(' ')?'':' ') + texte : texte;
-        }
-        dernierIndex = i;
-      }
-    }
-  };
-  // Redémarre automatiquement après chaque résultat (mode continu manuel)
-  const onEndOriginal = () => {
-    if(isListening) {
-      try { recognition.start(); } catch(e){}
-    }
-  };
-  recognition.onend = () => {
-    if(isListening) {
-      // Relance pour continuer à écouter
-      try { recognition.start(); } catch(e){
-        isListening = false;
-        btn.textContent = '🎤 Dicter';
-        btn.style.background = '';
-      }
-    } else {
-      btn.textContent = '🎤 Dicter';
-      btn.style.background = '';
-    }
-  };
-
-  recognition.onerror = (e) => {
-    toast('Erreur micro: '+e.error,'err');
-    isListening = false;
-    btn.textContent = '🎤 Dicter';
-    btn.style.background = '';
-  };
-  recognition.start();
-  isListening = true;
-  btn.textContent = '⏹ Arrêter';
-  btn.style.background = '#E84545';
-  toast('🎤 Parlez maintenant...');
 }
 
 // ══════════════════════════════════════════════
