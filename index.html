@@ -1,4 +1,4 @@
- <!DOCTYPE html>
+<!DOCTYPE html>
 <html lang="fr">
 <head>
 <meta charset="UTF-8">
@@ -176,6 +176,7 @@
         <option value="ARBAN">👑 ARBAN</option>
         <option value="JOSE">👑 JOSE</option>
         <option value="PACO">👑 PACO</option>
+        <option value="JOAN">👑 JOAN</option>
       </select>
     </div>
     <input class="login-input" type="password" id="login-pwd" placeholder="••••••" maxlength="20"
@@ -421,7 +422,8 @@ const GALLERY     = 'https://mirjfr.github.io/chantier/gallery.html';
 const USER_BINS = {
   PACO:  '69ecb458856a6821896f951b',
   ARBAN: localStorage.getItem('bin_ARBAN') || null,
-  JOSE:  localStorage.getItem('bin_JOSE')  || null
+  JOSE:  localStorage.getItem('bin_JOSE')  || null,
+  JOAN:  localStorage.getItem('bin_JOAN')  || null
 };
 
 function getBinId() {
@@ -1155,7 +1157,7 @@ dz.addEventListener('drop',e=>{e.preventDefault();dz.style.borderColor='';handle
 // LOGIN MULTI-UTILISATEURS
 // ══════════════════════════════════════════════
 // Mots de passe par défaut — modifiables par chaque utilisateur
-const DEFAULT_PWDS = { ARBAN:'azerty', JOSE:'azerty', PACO:'azerty' };
+const DEFAULT_PWDS = { ARBAN:'azerty', JOSE:'azerty', PACO:'azerty', JOAN:'azerty' };
 let currentUser = null;
 
 function getPwd(user) {
@@ -1252,3 +1254,4 @@ function deconnecter() {
 </script>
 </body>
 </html>
+ 
