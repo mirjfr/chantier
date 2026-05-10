@@ -370,6 +370,12 @@
     <div id="notes-list" style="margin-top:14px;"></div>
   </div>
 
+  <!-- CONTRIBUTIONS CLIENT -->
+  <div class="card" id="card-client" style="display:none;">
+    <div class="card-title">✉️ Contributions du client</div>
+    <div id="client-content"></div>
+  </div>
+
   <!-- CAMERA -->
   <div class="card">
     <div class="card-title">📷 Appareil photo</div>
@@ -675,7 +681,75 @@ function renderChantiers() {
   }).join('');
 }
 
-function ouvrirChantier(id) {
+async function rafraichirChantier(id) {
+  // Synchronise depuis le cloud pour récupérer les contributions du client
+  if(!isOnline) return;
+  try {
+    const fresh = await lireBin();
+    if(fresh && fresh.length) {
+      chantiers = fresh;
+      sauvegarderCache(fresh);
+      const c = chantiers.find(x=>x.id===id);
+      if(c) {
+        current = c;
+        if(!current.notes) current.notes=[];
+        if(!current.taches) current.taches=[];
+      }
+    }
+  } catch(e){}
+}
+
+function renderClientContent() {
+  const card = document.getElementById('card-client');
+  const content = document.getElementById('client-content');
+  const messages = (current.messages||[]).filter(m=>m.from==='client');
+  const photosClient = current.photosClient||[];
+  const pdfsClient = current.pdfsClient||[];
+
+  if(!messages.length && !photosClient.length && !pdfsClient.length) {
+    card.style.display = 'none';
+    return;
+  }
+  card.style.display = 'block';
+
+  let html = '';
+
+  if(messages.length) {
+    html += '<div style="font-size:12px;color:var(--orange);font-weight:600;margin-bottom:10px;">💬 Messages reçus ('+messages.length+')</div>';
+    html += messages.map(m=>`
+      <div class="note-item" style="border-left:3px solid var(--orange);">
+        <div class="note-date">📅 ${new Date(m.date).toLocaleDateString('fr-FR',{day:'2-digit',month:'long',year:'numeric',hour:'2-digit',minute:'2-digit'})}</div>
+        <div class="note-text">${m.text}</div>
+      </div>`).join('');
+  }
+
+  if(photosClient.length) {
+    html += '<div style="font-size:12px;color:var(--orange);font-weight:600;margin:14px 0 10px;">📸 Photos du client ('+photosClient.length+')</div>';
+    html += '<div class="media-grid">' + photosClient.map((p,i)=>`
+      <div class="media-item">
+        <img src="${p.url}" loading="lazy" onclick="window.open('${p.url}','_blank')">
+        <div class="media-caption">Client • ${new Date(p.uploadedAt).toLocaleDateString('fr-FR')}</div>
+      </div>`).join('') + '</div>';
+  }
+
+  if(pdfsClient.length) {
+    html += '<div style="font-size:12px;color:var(--orange);font-weight:600;margin:14px 0 10px;">📄 Documents du client ('+pdfsClient.length+')</div>';
+    html += pdfsClient.map(p=>`
+      <div class="pdf-item">
+        <span style="font-size:22px;">📋</span>
+        <div style="flex:1;min-width:0;">
+          <div class="pdf-name">${p.name}</div>
+          <div class="pdf-size">Envoyé par le client</div>
+        </div>
+        <a href="${p.viewUrl||p.url}" target="_blank" class="btn btn-secondary btn-sm">👁 Voir</a>
+        <a href="${p.url}" target="_blank" class="btn btn-secondary btn-sm">⬇</a>
+      </div>`).join('');
+  }
+
+  content.innerHTML = html;
+}
+
+async function ouvrirChantier(id) {
   current=chantiers.find(c=>c.id===id);
   if(!current) return;
   if(!current.notes) current.notes=[];
@@ -685,6 +759,15 @@ function ouvrirChantier(id) {
   document.getElementById('detail-nom').textContent=current.nom;
   document.getElementById('detail-info').textContent='👤 '+current.client+(current.adresse?' • 📍 '+current.adresse:'');
   document.getElementById('detail-status').innerHTML=`<span class="status-badge status-${statutClass(current.statut)}">${statutLabel(current.statut)}</span>`;
+
+  // Rafraîchit depuis le cloud pour récupérer les contributions client
+  await rafraichirChantier(id);
+  // Re-update display nom/info au cas où ça a changé
+  if(current) {
+    document.getElementById('detail-nom').textContent=current.nom;
+    document.getElementById('detail-info').textContent='👤 '+current.client+(current.adresse?' • 📍 '+current.adresse:'');
+    document.getElementById('detail-status').innerHTML=`<span class="status-badge status-${statutClass(current.statut)}">${statutLabel(current.statut)}</span>`;
+  }
   // Actions rapides
   const actions = document.getElementById('actions-rapides');
   let html = '';
@@ -698,7 +781,7 @@ function ouvrirChantier(id) {
   document.getElementById('edit-statut').value=current.statut||'encours';
   document.getElementById('edit-date-fin').value=current.dateFin||'';
   verifierRetard();
-  renderTaches(); renderNotes(); renderPhotos(); renderPdfs();
+  renderClientContent(); renderTaches(); renderNotes(); renderPhotos(); renderPdfs();
 }
 
 function backToList() {
@@ -1254,3 +1337,4 @@ function deconnecter() {
 </script>
 </body>
 </html>
+ 
