@@ -88,6 +88,19 @@
   .toast { position:fixed; bottom:18px; left:50%; transform:translateX(-50%) translateY(80px); background:var(--dark2); border:1px solid rgba(200,184,154,0.2); border-radius:10px; padding:10px 18px; color:var(--cream); font-size:13px; z-index:2000; transition:transform 0.3s; }
   .toast.show { transform:translateX(-50%) translateY(0); }
 
+  /* CLIENT UPLOAD */
+  .client-zone { background:rgba(232,101,26,0.05); border:1px solid rgba(232,101,26,0.2); border-radius:14px; padding:18px; margin-bottom:14px; }
+  .client-title { color:var(--orange); font-size:13px; font-weight:600; text-transform:uppercase; letter-spacing:1px; margin-bottom:12px; }
+  .upload-zone-client { border:2px dashed rgba(232,101,26,0.3); border-radius:10px; padding:18px; text-align:center; cursor:pointer; position:relative; overflow:hidden; }
+  .upload-zone-client:hover { background:rgba(232,101,26,0.05); }
+  .upload-zone-client input[type=file] { position:absolute; inset:0; opacity:0; cursor:pointer; width:100%; height:100%; }
+  .msg-input { width:100%; background:rgba(255,255,255,0.05); border:1px solid rgba(200,184,154,0.2); border-radius:10px; padding:11px 14px; color:var(--cream); font-family:'DM Sans',sans-serif; font-size:14px; outline:none; resize:vertical; min-height:70px; margin-bottom:8px; }
+  .msg-btn { background:var(--orange); color:white; padding:10px 18px; border-radius:8px; border:none; font-size:13px; font-weight:600; cursor:pointer; font-family:'DM Sans',sans-serif; }
+  .msg-item { background:rgba(255,255,255,0.04); border:1px solid rgba(200,184,154,0.1); border-radius:10px; padding:12px; margin-bottom:8px; }
+  .msg-item.from-client { border-left:3px solid var(--orange); }
+  .msg-date { font-size:10px; color:var(--sand); margin-bottom:5px; }
+  .msg-text { font-size:13px; line-height:1.5; white-space:pre-wrap; }
+  .msg-author { font-size:11px; color:var(--orange); font-weight:600; margin-bottom:3px; }
   @media(max-width:600px) { .photo-grid{grid-template-columns:repeat(2,1fr);} .hero,.section{padding-left:14px;padding-right:14px;} }
 </style>
 </head>
@@ -125,7 +138,13 @@
 
 <script>
 const JSONBIN_KEY = '$2a$10$nEXjNGx96Wh6f9zC4p145OmJ.ux/yVXbLEG5owWYJdSVNL/vI4bgO';
+// Config Cloudinary + Uploadcare + JSONBin pour les uploads client
+const CLIENT_CLOUD = 'dyojhn5ng';
+const CLIENT_PRESET = 'chantier_unsigned';
+const CLIENT_UC_KEY = '020579f2bad5b94fa948';
 let chantierData = null;
+let chantierBinId = null;
+let allChantiers = [];
 let currentUrl = '', currentName = '';
 
 function showToast(msg) {
@@ -167,6 +186,7 @@ function ouvrirGalerie() {
 async function init() {
   const params = new URLSearchParams(window.location.search);
   const binId = params.get('bin');
+  chantierBinId = binId;
   const chantierId = window.location.hash.replace('#','').trim();
 
   if(!binId || !chantierId) {
@@ -182,6 +202,7 @@ async function init() {
     });
     const d = await r.json();
     const chantiers = d.record || [];
+    allChantiers = chantiers;
     const c = chantiers.find(x=>x.id===chantierId);
     if(!c) throw new Error('Chantier introuvable');
 
@@ -258,6 +279,17 @@ function renderGallery(c) {
         <div class="tache-label ${t.done?'done':''}">${t.text}</div>
       </div>`).join('')}` : '';
 
+  // Messages échangés
+  const messages = c.messages || [];
+  const messagesHtml = messages.length ? `
+    <div class="section-label">💬 Messages (${messages.length})</div>
+    ${messages.map(m=>`
+      <div class="msg-item ${m.from==='client'?'from-client':''}">
+        <div class="msg-author">${m.from==='client'?'👤 Vous':'🔧 '+(m.author||'Prestataire')}</div>
+        <div class="msg-date">📅 ${new Date(m.date).toLocaleDateString('fr-FR',{day:'2-digit',month:'long',hour:'2-digit',minute:'2-digit'})}</div>
+        <div class="msg-text">${m.text}</div>
+      </div>`).join('')}` : '';
+
   document.getElementById('app').innerHTML = `
     <div class="hero">
       <h1>${c.nom} <span class="status-badge status-${c.statut||'encours'}">${statutLabel(c.statut)}</span></h1>
@@ -269,8 +301,36 @@ function renderGallery(c) {
       </div>
     </div>
     <div class="section">
-      ${photosHtml}${pdfsHtml}${tachesHtml}${notesHtml}
-      ${!photos.length&&!pdfs.length&&!notes.length&&!taches.length?'<div class="error-box"><div style="font-size:40px;margin-bottom:12px;">📭</div><p>Aucun contenu disponible.</p></div>':''}
+      ${photosHtml}${pdfsHtml}${tachesHtml}${notesHtml}${messagesHtml}
+
+      <!-- ZONE INTERACTION CLIENT -->
+      <div class="section-label">✉️ Vos contributions</div>
+
+      <div class="client-zone">
+        <div class="client-title">💬 Envoyer un message</div>
+        <textarea class="msg-input" id="client-msg" placeholder="Écrivez votre message..."></textarea>
+        <button class="msg-btn" onclick="envoyerMessage()">📨 Envoyer le message</button>
+      </div>
+
+      <div class="client-zone">
+        <div class="client-title">📸 Envoyer des photos</div>
+        <div class="upload-zone-client">
+          <input type="file" accept="image/*" multiple onchange="envoyerPhotosClient(this.files)">
+          <div style="font-size:28px;margin-bottom:6px;">🖼️</div>
+          <div style="color:var(--sand);font-size:13px;"><strong style="color:var(--orange)">Cliquez ici</strong> pour partager des photos</div>
+        </div>
+      </div>
+
+      <div class="client-zone">
+        <div class="client-title">📄 Envoyer des documents (PDF)</div>
+        <div class="upload-zone-client">
+          <input type="file" accept=".pdf" multiple onchange="envoyerPdfsClient(this.files)">
+          <div style="font-size:28px;margin-bottom:6px;">📋</div>
+          <div style="color:var(--sand);font-size:13px;"><strong style="color:var(--orange)">Cliquez ici</strong> pour partager un PDF</div>
+        </div>
+      </div>
+
+      ${!photos.length&&!pdfs.length&&!notes.length&&!taches.length?'<div style="text-align:center;padding:24px;color:var(--sand);font-size:13px;">Votre prestataire ajoutera bientôt du contenu ici.</div>':''}
     </div>`;
 }
 
@@ -291,6 +351,100 @@ async function telecharger(url, nom) {
     window.open(url,'_blank');
     showToast('📂 Ouvert dans le navigateur');
   }
+}
+
+// ── CLIENT : ENVOYER MESSAGE ──
+async function envoyerMessage() {
+  const txt = document.getElementById('client-msg').value.trim();
+  if(!txt) { showToast('Écrivez un message d\'abord'); return; }
+  showToast('📨 Envoi...');
+  if(!chantierData.messages) chantierData.messages = [];
+  chantierData.messages.unshift({
+    from: 'client',
+    text: txt,
+    date: new Date().toISOString()
+  });
+  try {
+    await majBin();
+    showToast('✅ Message envoyé !');
+    document.getElementById('client-msg').value = '';
+    renderGallery(chantierData);
+  } catch(e) { showToast('❌ Erreur d\'envoi'); }
+}
+
+// ── CLIENT : ENVOYER PHOTOS ──
+async function envoyerPhotosClient(files) {
+  if(!files.length) return;
+  showToast('📤 Envoi de '+files.length+' photo(s)...');
+  if(!chantierData.photosClient) chantierData.photosClient = [];
+  try {
+    for(const f of files) {
+      const fd = new FormData();
+      fd.append('file', f);
+      fd.append('upload_preset', CLIENT_PRESET);
+      fd.append('folder', 'chantiers/'+chantierData.id+'/client_photos');
+      const r = await fetch(`https://api.cloudinary.com/v1_1/${CLIENT_CLOUD}/image/upload`, {method:'POST', body:fd});
+      const d = await r.json();
+      if(d.error) throw new Error(d.error.message);
+      const optUrl = d.secure_url.replace('/image/upload/', '/image/upload/f_auto,q_auto,w_1920/');
+      chantierData.photosClient.push({
+        url: optUrl,
+        name: f.name,
+        from: 'client',
+        uploadedAt: new Date().toISOString()
+      });
+    }
+    await majBin();
+    showToast('✅ '+files.length+' photo(s) envoyée(s) !');
+    renderGallery(chantierData);
+  } catch(e) { showToast('❌ Erreur : '+e.message); }
+}
+
+// ── CLIENT : ENVOYER PDFs ──
+async function envoyerPdfsClient(files) {
+  if(!files.length) return;
+  showToast('📤 Envoi de '+files.length+' PDF(s)...');
+  if(!chantierData.pdfsClient) chantierData.pdfsClient = [];
+  try {
+    for(const f of files) {
+      const fd = new FormData();
+      fd.append('UPLOADCARE_PUB_KEY', CLIENT_UC_KEY);
+      fd.append('UPLOADCARE_STORE', '1');
+      fd.append('file', f);
+      const r = await fetch('https://upload.uploadcare.com/base/', {method:'POST', body:fd});
+      const d = await r.json();
+      if(d.error) throw new Error(d.error);
+      const fileUrl = 'https://52bw17czxv.ucarecd.net/'+d.file+'/'+encodeURIComponent(f.name);
+      const viewUrl = 'https://docs.google.com/viewer?url='+encodeURIComponent(fileUrl);
+      chantierData.pdfsClient.push({
+        url: fileUrl,
+        viewUrl: viewUrl,
+        name: f.name,
+        size: f.size,
+        from: 'client',
+        uploadedAt: new Date().toISOString()
+      });
+    }
+    await majBin();
+    showToast('✅ '+files.length+' PDF(s) envoyé(s) !');
+    renderGallery(chantierData);
+  } catch(e) { showToast('❌ Erreur : '+e.message); }
+}
+
+// Met à jour le bin avec les modifications du client
+async function majBin() {
+  if(!chantierBinId) throw new Error('Bin manquant');
+  // Met à jour le chantier dans la liste complète
+  const idx = allChantiers.findIndex(x=>x.id===chantierData.id);
+  if(idx>=0) allChantiers[idx] = chantierData;
+  await fetch('https://api.jsonbin.io/v3/b/'+chantierBinId, {
+    method: 'PUT',
+    headers: {
+      'Content-Type': 'application/json',
+      'X-Master-Key': JSONBIN_KEY
+    },
+    body: JSON.stringify(allChantiers)
+  });
 }
 
 function openLightbox(url, nom) {
