@@ -362,7 +362,10 @@
   <div class="card">
     <div class="card-title">📝 Notes & Suivi</div>
     <textarea id="note-input" placeholder="Travaux effectués, remarques, matériaux..." style="min-height:70px;margin-bottom:10px;"></textarea>
-    <button class="btn btn-primary btn-sm" onclick="ajouterNote()">➕ Ajouter la note</button>
+    <div style="display:flex;gap:8px;flex-wrap:wrap;">
+      <button class="btn btn-primary btn-sm" onclick="ajouterNote()">➕ Ajouter la note</button>
+      <button class="btn btn-secondary btn-sm" id="voice-btn" onclick="toggleVoiceNote()">🎤 Dicter</button>
+    </div>
     <div id="notes-list" style="margin-top:14px;"></div>
   </div>
 
@@ -775,6 +778,85 @@ function renderTaches() {
       <div class="tache-text ${t.done?'done':''}">${t.text}</div>
       <button class="btn btn-danger" style="padding:4px 8px;font-size:11px;" onclick="deleteTache(${i})">✕</button>
     </div>`).join('');
+}
+
+
+// ══════════════════════════════════════════════
+// NOTES VOCALES — Anti-doublons par signature
+// ══════════════════════════════════════════════
+let recognition = null;
+let isListening = false;
+let resultatsAjoutes = new Set(); // Mémoire des phrases déjà ajoutées
+
+function toggleVoiceNote() {
+  const SR = window.SpeechRecognition || window.webkitSpeechRecognition;
+  if(!SR) { toast('Reconnaissance vocale non supportée','err'); return; }
+  const btn = document.getElementById('voice-btn');
+  const input = document.getElementById('note-input');
+
+  if(isListening) {
+    isListening = false;
+    if(recognition) {
+      try { recognition.onend = null; recognition.stop(); } catch(e){}
+    }
+    btn.textContent = '🎤 Dicter';
+    btn.style.background = '';
+    return;
+  }
+
+  // Démarre une nouvelle session
+  resultatsAjoutes.clear();
+  isListening = true;
+  btn.textContent = '⏹ Arrêter';
+  btn.style.background = '#E84545';
+  toast('🎤 Parlez maintenant...');
+
+  recognition = new SR();
+  recognition.lang = 'fr-FR';
+  recognition.continuous = false;
+  recognition.interimResults = false;
+  recognition.maxAlternatives = 1;
+
+  recognition.onresult = (event) => {
+    const dernier = event.results[event.results.length - 1];
+    if(dernier && dernier.isFinal) {
+      const texte = dernier[0].transcript.trim();
+      // Signature unique par texte + position dans le champ
+      const signature = texte + '|' + input.value.length;
+      if(texte && !resultatsAjoutes.has(signature)) {
+        resultatsAjoutes.add(signature);
+        const actuel = input.value;
+        input.value = actuel ? actuel + (actuel.endsWith(' ')?'':' ') + texte : texte;
+      }
+    }
+  };
+
+  recognition.onend = () => {
+    if(isListening) {
+      // Relance pour continuer
+      try { recognition.start(); } catch(e){
+        isListening = false;
+        btn.textContent = '🎤 Dicter';
+        btn.style.background = '';
+      }
+    }
+  };
+
+  recognition.onerror = (e) => {
+    if(e.error !== 'no-speech') {
+      isListening = false;
+      btn.textContent = '🎤 Dicter';
+      btn.style.background = '';
+    }
+  };
+
+  try { recognition.start(); }
+  catch(e){
+    isListening = false;
+    btn.textContent = '🎤 Dicter';
+    btn.style.background = '';
+    toast('Erreur micro','err');
+  }
 }
 
 // ══════════════════════════════════════════════
