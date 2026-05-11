@@ -1406,7 +1406,11 @@ async function supprimerChantier() {
 // ══════════════════════════════════════════════
 function genererQR() {
   if(!current) return;
-  const url=GALLERY+'?bin='+getBinId()+'#'+current.id;
+  // Pour la SECRETAIRE : utilise le bin du propriétaire du chantier, pas le sien (elle n'en a pas)
+  const binId = (currentUser==='SECRETAIRE' && current._owner)
+    ? (USER_BINS[current._owner] || localStorage.getItem('bin_'+current._owner))
+    : getBinId();
+  const url=GALLERY+'?bin='+binId+'#'+current.id;
   document.getElementById('qr-link-text').textContent=url;
   document.getElementById('qr-subtitle').textContent=current.nom+' — '+current.client;
   document.getElementById('qrcode').innerHTML='';
