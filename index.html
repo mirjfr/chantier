@@ -1,4 +1,4 @@
-<!DOCTYPE html>
+ <!DOCTYPE html>
 <html lang="fr">
 <head>
 <meta charset="UTF-8">
@@ -463,6 +463,7 @@ let chantiers = [], current = null, camStream = null;
 let isOnline = navigator.onLine;
 let pendingSync = false;
 let filtreActif = 'tous';
+let annuaire = {}; // registre central : { ARBAN: binId, JOSE: binId, ... }
 
 // ══════════════════════════════════════════════
 // ONLINE / OFFLINE
@@ -515,10 +516,62 @@ function chargerPending() {
 }
 
 // ══════════════════════════════════════════════
+// ANNUAIRE CENTRAL (stocké dans le bin de PACO)
+// ══════════════════════════════════════════════
+// PACO est le seul bin codé en dur → son bin sert de registre.
+// Son format : { chantiers: [...], annuaire: { ARBAN: "binId", ... } }
+// Les autres bins restent des tableaux simples.
+
+async function lireAnnuaireDepuisPaco() {
+  const r = await fetch(JSONBIN_URL+'/'+USER_BINS.PACO+'/latest', {headers:{'X-Master-Key':JSONBIN_KEY}});
+  const d = await r.json();
+  const rec = d.record;
+  if(Array.isArray(rec)) return { chantiers: rec, annuaire: {PACO: USER_BINS.PACO} };
+  return { chantiers: rec.chantiers||[], annuaire: rec.annuaire||{PACO: USER_BINS.PACO} };
+}
+
+async function mettreAJourAnnuaire(user, binId) {
+  if(user==='PACO') { annuaire.PACO = USER_BINS.PACO; return; }
+  try {
+    const {chantiers:pacoCh, annuaire:ann} = await lireAnnuaireDepuisPaco();
+    if(ann[user]===binId) { annuaire=ann; return; } // déjà enregistré
+    ann[user] = binId;
+    annuaire = ann;
+    // Met aussi à jour USER_BINS et localStorage pour les autres sessions
+    USER_BINS[user] = binId;
+    localStorage.setItem('bin_'+user, binId);
+    await fetch(JSONBIN_URL+'/'+USER_BINS.PACO, {
+      method:'PUT',
+      headers:{'Content-Type':'application/json','X-Master-Key':JSONBIN_KEY},
+      body:JSON.stringify({chantiers:pacoCh, annuaire:ann})
+    });
+  } catch(e){ console.warn('Annuaire:', e.message); }
+}
+
+// Écrit dans le bin d'un utilisateur donné (gère le format spécial de PACO)
+async function ecrireBinUtilisateur(user, binId, liste) {
+  const payload = (user==='PACO')
+    ? {chantiers: liste, annuaire: annuaire}
+    : liste;
+  for(let tentative=0; tentative<2; tentative++){
+    if(tentative>0) await new Promise(r=>setTimeout(r,1500));
+    const r = await fetch(JSONBIN_URL+'/'+binId,{
+      method:'PUT',
+      headers:{'Content-Type':'application/json','X-Master-Key':JSONBIN_KEY},
+      body:JSON.stringify(payload)
+    });
+    const d = await r.json();
+    if(!d.message) return;
+    if(tentative===0) continue;
+    throw new Error(d.message);
+  }
+}
+
+// ══════════════════════════════════════════════
 // JSONBIN
 // ══════════════════════════════════════════════
 async function lireBin() {
-  if(currentUser === 'SECRETAIRE') return await lireTousLesBins();
+  if(currentUser==='SECRETAIRE') return await lireTousLesBins();
   const binId = getBinId();
   if(!binId) return [];
   const controller = new AbortController();
@@ -530,22 +583,43 @@ async function lireBin() {
     });
     clearTimeout(timeout);
     const d = await r.json();
+    // PACO : format objet avec annuaire
+    if(currentUser==='PACO') {
+      const rec = d.record;
+      if(Array.isArray(rec)) { annuaire={PACO:USER_BINS.PACO}; return rec; }
+      annuaire = rec.annuaire||{PACO:USER_BINS.PACO};
+      // Met à jour USER_BINS depuis l'annuaire
+      Object.entries(annuaire).forEach(([u,id])=>{ if(!USER_BINS[u]){USER_BINS[u]=id;localStorage.setItem('bin_'+u,id);} });
+      return rec.chantiers||[];
+    }
     return d.record || [];
   } catch(e) { clearTimeout(timeout); throw e; }
 }
 
 async function lireTousLesBins() {
+  // 1. Lire PACO pour récupérer l'annuaire
+  const {chantiers:_ch, annuaire:ann} = await lireAnnuaireDepuisPaco();
+  annuaire = ann;
+  // Met à jour USER_BINS depuis l'annuaire
+  Object.entries(ann).forEach(([u,id])=>{
+    USER_BINS[u]=id; localStorage.setItem('bin_'+u,id);
+  });
+  // 2. Lire tous les bins en parallèle
   const users = ['ARBAN','JOSE','PACO','JOAN'];
   const results = await Promise.allSettled(users.map(async user => {
-    const binId = USER_BINS[user] || localStorage.getItem('bin_'+user);
+    const binId = USER_BINS[user]||ann[user]||localStorage.getItem('bin_'+user);
     if(!binId) return [];
-    const r = await fetch(JSONBIN_URL+'/'+binId+'/latest', {
-      headers:{'X-Master-Key':JSONBIN_KEY}
-    });
+    const r = await fetch(JSONBIN_URL+'/'+binId+'/latest',{headers:{'X-Master-Key':JSONBIN_KEY}});
     const d = await r.json();
-    return (d.record||[]).map(c=>({...c, _owner:user}));
+    let liste;
+    if(user==='PACO'){
+      liste = Array.isArray(d.record)?d.record:(d.record.chantiers||[]);
+    } else {
+      liste = d.record||[];
+    }
+    return liste.map(c=>({...c, _owner:user}));
   }));
-  const tous = [];
+  const tous=[];
   results.forEach(res=>{ if(res.status==='fulfilled') tous.push(...res.value); });
   return tous;
 }
@@ -566,23 +640,18 @@ async function creerNouveauBin(data) {
   const newId = d.metadata.id;
   USER_BINS[currentUser] = newId;
   localStorage.setItem('bin_'+currentUser, newId);
+  // Enregistre dans l'annuaire de PACO (sans bloquer)
+  mettreAJourAnnuaire(currentUser, newId).catch(()=>{});
   return newId;
 }
 
 async function ecrireBin(data) {
   let binId = getBinId();
-  // Si pas de bin pour cet utilisateur, on en crée un
   if(!binId) {
     binId = await creerNouveauBin(data);
     return;
   }
-  const r = await fetch(JSONBIN_URL+'/'+binId, {
-    method:'PUT',
-    headers:{'Content-Type':'application/json','X-Master-Key':JSONBIN_KEY},
-    body:JSON.stringify(data)
-  });
-  const d = await r.json();
-  if(d.message) throw new Error(d.message);
+  await ecrireBinUtilisateur(currentUser, binId, data);
 }
 
 async function syncAll() {
@@ -590,10 +659,14 @@ async function syncAll() {
   const btn=document.getElementById('sync-btn');
   btn.textContent='⏳';
   try {
-    // Upload les données en attente d'abord
     const pending = chargerPending();
     if(pending) { await ecrireBin(pending); localStorage.removeItem('chantiers_pending'); }
     chantiers = await lireBin();
+    // Enregistre dans l'annuaire si nécessaire (premier login sur ce PC)
+    if(currentUser!=='SECRETAIRE' && currentUser!=='PACO') {
+      const binId = getBinId();
+      if(binId && annuaire[currentUser]!==binId) mettreAJourAnnuaire(currentUser,binId).catch(()=>{});
+    }
     sauvegarderCache(chantiers);
     renderChantiers();
     document.getElementById('sync-status').textContent = currentUser+' — Synchronisé ✓ — ' + new Date().toLocaleTimeString('fr-FR');
@@ -615,13 +688,7 @@ async function saveAll() {
     if(!isOnline){ pendingSync=true; toast('💾 Sauvegardé localement','offline'); return; }
     // Reconstruit la liste du propriétaire (sans _owner)
     const ownerList = chantiers.filter(c=>c._owner===owner).map(({_owner,...rest})=>rest);
-    const r = await fetch(JSONBIN_URL+'/'+ownerBinId,{
-      method:'PUT',
-      headers:{'Content-Type':'application/json','X-Master-Key':JSONBIN_KEY},
-      body:JSON.stringify(ownerList)
-    });
-    const d = await r.json();
-    if(d.message) throw new Error(d.message);
+    await ecrireBinUtilisateur(owner, ownerBinId, ownerList);
     return;
   }
   // ── CAS NORMAL ──
@@ -701,9 +768,9 @@ async function creerChantier() {
       current = cWithOwner;
       sauvegarderCache(chantiers);
       if(isOnline) {
-        const ownerBinId = USER_BINS[owner] || localStorage.getItem('bin_'+owner);
+        const ownerBinId = USER_BINS[owner]||localStorage.getItem('bin_'+owner);
         const ownerList  = chantiers.filter(ch=>ch._owner===owner).map(({_owner,...rest})=>rest);
-        await fetch(JSONBIN_URL+'/'+ownerBinId,{method:'PUT',headers:{'Content-Type':'application/json','X-Master-Key':JSONBIN_KEY},body:JSON.stringify(ownerList)});
+        await ecrireBinUtilisateur(owner, ownerBinId, ownerList);
       } else { pendingSync=true; }
     } else {
       chantiers.unshift(c);
@@ -1292,12 +1359,16 @@ async function sauverModifications() {
   current.desc = document.getElementById('edit-desc').value.trim();
   current.pwdClient = document.getElementById('edit-pwd-client').value.trim();
   showLoader('Sauvegarde...');
-  await saveAll();
-  hideLoader();
-  closeEditModal();
-  // Rafraichit l'affichage
-  ouvrirChantier(current.id);
-  toast('Modifications enregistrées !');
+  try {
+    await saveAll();
+    hideLoader();
+    closeEditModal();
+    ouvrirChantier(current.id);
+    toast('Modifications enregistrées !');
+  } catch(e) {
+    hideLoader();
+    toast('❌ Erreur sauvegarde — réessayez', 'err');
+  }
 }
 
 async function supprimerChantier() {
@@ -1307,19 +1378,27 @@ async function supprimerChantier() {
   chantiers = chantiers.filter(c=>c.id!==current.id);
   showLoader('Suppression...');
   sauvegarderCache(chantiers);
-  if(isOnline) {
-    if(currentUser==='SECRETAIRE') {
-      const ownerBinId = USER_BINS[owner] || localStorage.getItem('bin_'+owner);
-      const ownerList  = chantiers.filter(c=>c._owner===owner).map(({_owner,...rest})=>rest);
-      await fetch(JSONBIN_URL+'/'+ownerBinId,{method:'PUT',headers:{'Content-Type':'application/json','X-Master-Key':JSONBIN_KEY},body:JSON.stringify(ownerList)});
+  try {
+    if(isOnline) {
+      if(currentUser==='SECRETAIRE') {
+        const ownerBinId = USER_BINS[owner]||localStorage.getItem('bin_'+owner);
+        const ownerList  = chantiers.filter(c=>c._owner===owner).map(({_owner,...rest})=>rest);
+        await ecrireBinUtilisateur(owner, ownerBinId, ownerList);
+      } else {
+        await ecrireBin(chantiers);
+      }
     } else {
-      await ecrireBin(chantiers);
+      sauvegarderPending(chantiers);
+      pendingSync = true;
     }
-  } else { sauvegarderPending(chantiers); pendingSync=true; }
-  hideLoader();
-  closeEditModal();
-  backToList();
-  toast('Chantier supprimé');
+    hideLoader();
+    closeEditModal();
+    backToList();
+    toast('Chantier supprimé');
+  } catch(e) {
+    hideLoader();
+    toast('❌ Erreur suppression : '+e.message+' — réessayez dans quelques secondes', 'err');
+  }
 }
 
 // ══════════════════════════════════════════════
@@ -1460,4 +1539,3 @@ function deconnecter() {
 </script>
 </body>
 </html>
- 
