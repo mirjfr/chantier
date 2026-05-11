@@ -1,4 +1,4 @@
- <!DOCTYPE html>
+<!DOCTYPE html>
 <html lang="fr">
 <head>
 <meta charset="UTF-8">
@@ -550,6 +550,7 @@ async function mettreAJourAnnuaire(user, binId) {
 
 // Écrit dans le bin d'un utilisateur donné (gère le format spécial de PACO)
 async function ecrireBinUtilisateur(user, binId, liste) {
+  if(!binId) throw new Error('ID du bin introuvable pour '+user+'. Reconnectez-vous une fois depuis votre téléphone.');
   const payload = (user==='PACO')
     ? {chantiers: liste, annuaire: annuaire}
     : liste;
@@ -572,7 +573,16 @@ async function ecrireBinUtilisateur(user, binId, liste) {
 // ══════════════════════════════════════════════
 async function lireBin() {
   if(currentUser==='SECRETAIRE') return await lireTousLesBins();
-  const binId = getBinId();
+  let binId = getBinId();
+  // Bin ID manquant → essaie de le récupérer depuis l'annuaire de PACO
+  if(!binId && currentUser!=='PACO') {
+    try {
+      const {annuaire: ann} = await lireAnnuaireDepuisPaco();
+      annuaire = ann;
+      binId = ann[currentUser] || null;
+      if(binId) { USER_BINS[currentUser]=binId; localStorage.setItem('bin_'+currentUser,binId); toast('🔄 Compte récupéré depuis l\'annuaire !'); }
+    } catch(e) {}
+  }
   if(!binId) return [];
   const controller = new AbortController();
   const timeout = setTimeout(()=>controller.abort(), 8000);
@@ -588,7 +598,6 @@ async function lireBin() {
       const rec = d.record;
       if(Array.isArray(rec)) { annuaire={PACO:USER_BINS.PACO}; return rec; }
       annuaire = rec.annuaire||{PACO:USER_BINS.PACO};
-      // Met à jour USER_BINS depuis l'annuaire
       Object.entries(annuaire).forEach(([u,id])=>{ if(!USER_BINS[u]){USER_BINS[u]=id;localStorage.setItem('bin_'+u,id);} });
       return rec.chantiers||[];
     }
@@ -604,6 +613,11 @@ async function lireTousLesBins() {
   Object.entries(ann).forEach(([u,id])=>{
     USER_BINS[u]=id; localStorage.setItem('bin_'+u,id);
   });
+  // Avertit si des utilisateurs ne sont pas encore enregistrés
+  const manquants = ['ARBAN','JOSE','PACO','JOAN'].filter(u=>!USER_BINS[u]&&!ann[u]&&!localStorage.getItem('bin_'+u));
+  if(manquants.length) {
+    setTimeout(()=>toast('⚠️ '+manquants.join(', ')+' doivent se connecter au moins une fois pour apparaître ici'), 2500);
+  }
   // 2. Lire tous les bins en parallèle
   const users = ['ARBAN','JOSE','PACO','JOAN'];
   const results = await Promise.allSettled(users.map(async user => {
@@ -647,6 +661,19 @@ async function creerNouveauBin(data) {
 
 async function ecrireBin(data) {
   let binId = getBinId();
+  // Bin ID manquant → essaie de le récupérer depuis l'annuaire de PACO
+  if(!binId) {
+    try {
+      const {annuaire: ann} = await lireAnnuaireDepuisPaco();
+      annuaire = ann;
+      binId = ann[currentUser] || null;
+      if(binId) {
+        USER_BINS[currentUser] = binId;
+        localStorage.setItem('bin_'+currentUser, binId);
+        toast('🔄 Compte récupéré depuis l\'annuaire !');
+      }
+    } catch(e) {}
+  }
   if(!binId) {
     binId = await creerNouveauBin(data);
     return;
