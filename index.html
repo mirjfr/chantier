@@ -1,4 +1,4 @@
-<!DOCTYPE html>
+ <!DOCTYPE html>
 <html lang="fr">
 <head>
 <meta charset="UTF-8">
@@ -448,15 +448,21 @@ const UC_KEY      = '020579f2bad5b94fa948';
 const GALLERY     = 'https://mirjfr.github.io/chantier/gallery.html';
 
 // BIN par utilisateur — PACO a le bin existant, ARBAN et JOSE auront le leur créé automatiquement
+// Valide un bin ID : rejette null, "null", "undefined", chaînes trop courtes
+function sanitizeBinId(id) {
+  if(!id || id==='null' || id==='undefined' || String(id).length < 10) return null;
+  return id;
+}
+
 const USER_BINS = {
   PACO:  '69ecb458856a6821896f951b',
-  ARBAN: localStorage.getItem('bin_ARBAN') || null,
-  JOSE:  localStorage.getItem('bin_JOSE')  || null,
-  JOAN:  localStorage.getItem('bin_JOAN')  || null
+  ARBAN: sanitizeBinId(localStorage.getItem('bin_ARBAN')),
+  JOSE:  sanitizeBinId(localStorage.getItem('bin_JOSE')),
+  JOAN:  sanitizeBinId(localStorage.getItem('bin_JOAN')),
 };
 
 function getBinId() {
-  return USER_BINS[currentUser] || null;
+  return sanitizeBinId(USER_BINS[currentUser]);
 }
 
 let chantiers = [], current = null, camStream = null;
@@ -535,7 +541,9 @@ async function mettreAJourAnnuaire(user, binId) {
   try {
     const {chantiers:pacoCh, annuaire:ann} = await lireAnnuaireDepuisPaco();
     if(ann[user]===binId) { annuaire=ann; return; } // déjà enregistré
-    ann[user] = binId;
+    const cleanId = sanitizeBinId(binId);
+    if(!cleanId) { console.warn('Annuaire: binId invalide pour', user); return; }
+    ann[user] = cleanId;
     annuaire = ann;
     // Met aussi à jour USER_BINS et localStorage pour les autres sessions
     USER_BINS[user] = binId;
@@ -651,7 +659,8 @@ async function creerNouveauBin(data) {
   });
   const d = await r.json();
   if(d.message) throw new Error(d.message);
-  const newId = d.metadata.id;
+  const newId = sanitizeBinId(d.metadata?.id);
+  if(!newId) throw new Error('JSONBin n\'a pas retourné d\'ID valide');
   USER_BINS[currentUser] = newId;
   localStorage.setItem('bin_'+currentUser, newId);
   // Enregistre dans l'annuaire de PACO (sans bloquer)
@@ -1478,6 +1487,11 @@ function verifierLogin() {
   const user = document.getElementById('login-user').value;
   const pwd  = document.getElementById('login-pwd').value;
   if(pwd === getPwd(user)) {
+    // Nettoie les bin IDs corrompus dans localStorage (ex: "null", "undefined")
+    ['ARBAN','JOSE','PACO','JOAN'].forEach(u => {
+      const id = localStorage.getItem('bin_'+u);
+      if(id && !sanitizeBinId(id)) { localStorage.removeItem('bin_'+u); USER_BINS[u]=null; }
+    });
     currentUser = user;
     chantiers = [];
     document.getElementById('login-screen').style.display = 'none';
