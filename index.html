@@ -3,6 +3,9 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
+<meta http-equiv="Pragma" content="no-cache">
+<meta http-equiv="Expires" content="0">
 <title>ChantierPro</title>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
 <style>
@@ -1411,6 +1414,9 @@ async function supprimerChantier() {
   if(!confirm('⚠️ Supprimer définitivement ce chantier ?\nCette action est irréversible.')) return;
   if(!confirm('Confirmer la suppression de "'+current.nom+'" ?')) return;
   const owner = current._owner || currentUser;
+  // Sauvegarde pour restauration si la suppression échoue côté serveur
+  const chantierSauvegarde = {...current};
+  const indexSauvegarde    = chantiers.findIndex(c=>c.id===current.id);
   chantiers = chantiers.filter(c=>c.id!==current.id);
   showLoader('Suppression...');
   sauvegarderCache(chantiers);
@@ -1423,17 +1429,19 @@ async function supprimerChantier() {
       } else {
         await ecrireBin(chantiers);
       }
-    } else {
-      sauvegarderPending(chantiers);
-      pendingSync = true;
-    }
+    } else { sauvegarderPending(chantiers); pendingSync=true; }
     hideLoader();
     closeEditModal();
     backToList();
     toast('Chantier supprimé');
   } catch(e) {
+    // Restaure le chantier si la sauvegarde a échoué
+    if(indexSauvegarde >= 0) chantiers.splice(indexSauvegarde, 0, chantierSauvegarde);
+    else chantiers.unshift(chantierSauvegarde);
+    sauvegarderCache(chantiers);
+    renderChantiers();
     hideLoader();
-    toast('❌ Erreur suppression : '+e.message+' — réessayez dans quelques secondes', 'err');
+    toast('Erreur : '+e.message, 'err');
   }
 }
 
